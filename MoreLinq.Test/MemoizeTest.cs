@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using System.Linq;
-using System.Collections.ObjectModel;
 
 namespace MoreLinq.Test
 {
