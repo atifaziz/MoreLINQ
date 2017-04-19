@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MoreLinq.Test
 {
-    public sealed class SingleUseEnumerable<T> : IEnumerable<T>
+    sealed class SingleUseEnumerable<T> : IEnumerable<T>
     {
         private readonly IEnumerable<T> src;
         private bool enumerated = false;

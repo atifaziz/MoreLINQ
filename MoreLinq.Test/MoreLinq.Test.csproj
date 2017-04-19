@@ -53,6 +53,7 @@
       <Compile Include="SampleData.cs" />
       <Compile Include="Scope.cs" />
       <Compile Include="SequenceReader.cs" />
+      <Compile Include="SingleUseEnumerable.cs" />
       <Compile Include="TestingSequence.cs" />
       <Compile Include="TestExtensions.cs" />
       <Compile Include="UnenumerableList.cs" />
