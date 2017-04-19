@@ -4,29 +4,31 @@ using System.Collections.Generic;
 
 namespace MoreLinq.Test
 {
-    sealed class SingleUseEnumerable<T> : IEnumerable<T>
+    static class SingleUseEnumerable
     {
-        private readonly IEnumerable<T> src;
-        private bool enumerated = false;
-
-        public SingleUseEnumerable(IEnumerable<T> src)
+        public static IEnumerable<T> Create<T>(IEnumerable<T> source)
         {
-            this.src = src;
+            bool enumerated = false;
+            return Impl();
+
+             IEnumerable<T> Impl()
+             {
+                if (enumerated) throw new InvalidOperationException("enumerated twice");
+
+                foreach (var i in source)
+                    yield return i;
+
+                enumerated = true;
+             }
         }
 
-        public IEnumerator<T> GetEnumerator()
+        sealed class X<T> : IEnumerable<T>
         {
-            if (enumerated) throw new InvalidOperationException("enumerated twice");
+            readonly Func<IEnumerator<T>> _ef;
 
-            foreach (var i in src)
-                yield return i;
-
-            enumerated = true;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
+            public X(Func<IEnumerator<T>> ef) { _ef = ef; }
+            public IEnumerator<T> GetEnumerator() => _ef();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
 }

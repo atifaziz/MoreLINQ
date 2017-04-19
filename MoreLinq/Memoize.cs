@@ -60,7 +60,53 @@ namespace MoreLinq
                 return source;
             }
 
-            return (source as MemoizedEnumerable<T>) ?? new MemoizedEnumerable<T>(source, forceBuffering, disposeOnEarlyExit);
+            IList<T> cache = new List<T>();
+            IEnumerator<T> sourceEnumerator = null;
+            bool disposed = false;
+
+            return Impl();//(source as MemoizedEnumerable<T>) ?? new MemoizedEnumerable<T>(source, disposeOnEarlyExit);
+
+            IEnumerable<T> Impl()
+            {
+                if (sourceEnumerator == null && !disposed)
+                    sourceEnumerator = source.GetEnumerator();
+
+                int index = 0;
+                bool hasValue = false;
+
+                try
+                {
+                    while (true)
+                    {
+                        if (index < cache.Count)
+                            hasValue = true;
+                        else if ((hasValue = !disposed && sourceEnumerator.MoveNext()))
+                            cache.Add(sourceEnumerator.Current);
+                        else if (!disposed)
+                            DisposeSourceResources();
+
+                        if (hasValue)
+                            yield return cache[index];
+                        else
+                            break;
+
+                        index++;
+                    }
+                }
+                finally
+                {
+                    if (!disposed && disposeOnEarlyExit)
+                        DisposeSourceResources();
+                }
+            }
+            
+            void DisposeSourceResources()
+            {
+                disposed = true;
+                sourceEnumerator.Dispose();
+                source = null;
+                sourceEnumerator = null;
+            }
         }
     }
 
@@ -72,7 +118,7 @@ namespace MoreLinq
         private IEnumerator<T> sourceEnumerator;
         private bool disposed;
 
-        public MemoizedEnumerable(IEnumerable<T> sequence, bool forceBuffering, bool shouldDisposeOnEarlyExit)
+        public MemoizedEnumerable(IEnumerable<T> sequence, bool shouldDisposeOnEarlyExit)
         {
             if (sequence == null) throw new ArgumentNullException(nameof(sequence));
 
@@ -94,19 +140,11 @@ namespace MoreLinq
                 while (true)
                 {
                     if (index < cache.Count)
-                    {
                         hasValue = true;
-                    }
-
                     else if ((hasValue = !disposed && sourceEnumerator.MoveNext()))
-                    {
                         cache.Add(sourceEnumerator.Current);
-                    }
-
                     else if (!disposed)
-                    {
                         DisposeSourceResources();
-                    }
 
                     if (hasValue)
                         yield return cache[index];
@@ -119,16 +157,11 @@ namespace MoreLinq
             finally
             {
                 if (!disposed && disposeOnEarlyExit)
-                {
                     DisposeSourceResources();
-                }
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         private void DisposeSourceResources()
         {

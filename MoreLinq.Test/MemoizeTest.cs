@@ -129,7 +129,7 @@ namespace MoreLinq.Test
         [Test]
         public void MemoizeIsEnumeratedOnlyOnce()
         {
-            var memoized = new SingleUseEnumerable<int>(Enumerable.Range(1, 10)).Memoize();
+            var memoized = SingleUseEnumerable.Create(Enumerable.Range(1, 10)).Memoize();
 
             Assert.IsTrue(memoized.ToList().Count == 10);
             Assert.IsTrue(memoized.ToList().Count == 10);
