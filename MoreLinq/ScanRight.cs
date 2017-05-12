@@ -1,4 +1,4 @@
-﻿#region License and Terms
+#region License and Terms
 // MoreLINQ - Extensions to LINQ to Objects
 // Copyright (c) 2017 Leandro F. Vieira (leandromoh). All rights reserved.
 // 
@@ -50,16 +50,11 @@ namespace MoreLinq
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return _(); IEnumerable<TSource> _()
-            {
-                var list = (source as IList<TSource>) ?? source.ToList();
-
-                if (list.Count == 0)
-                    yield break;
-
-                foreach (var item in ScanRightImpl(list, list.Last(), func, list.Count - 1))
-                    yield return item;
-            }
+            return ScanRightImpl(source,
+                                 list => list.Count > 0
+                                       ? ScanRightSeedCount.Some(list.Last(), list.Count - 1)
+                                       : ScanRightSeedCount<TSource>.None,
+                                 func);
         }
 
         /// <summary>
@@ -89,17 +84,40 @@ namespace MoreLinq
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            return _(); IEnumerable<TAccumulate> _()
-            {
-                var list = (source as IList<TSource>) ?? source.ToList();
+            return ScanRightImpl(source, list => ScanRightSeedCount.Some(seed, list.Count), func);
+        }
 
-                foreach (var item in ScanRightImpl(list, seed, func, list.Count))
-                    yield return item;
+        static class ScanRightSeedCount
+        {
+            public static ScanRightSeedCount<T> Some<T>(T seed, int count) =>
+                new ScanRightSeedCount<T>(true, seed, count);
+        }
+
+        struct ScanRightSeedCount<T>
+        {
+            public readonly bool Seeded;
+            public readonly T Seed;
+            public readonly int Count;
+
+            public static readonly ScanRightSeedCount<T> None = new ScanRightSeedCount<T>(false, default(T), 0);
+
+            public ScanRightSeedCount(bool seeded, T seed, int count)
+            {
+                Seeded = seeded;
+                Seed = seed;
+                Count = count;
             }
         }
 
-        private static IEnumerable<TResult> ScanRightImpl<TSource, TResult>(IList<TSource> list, TResult accumulator, Func<TSource, TResult, TResult> func, int i)
+        private static IEnumerable<TResult> ScanRightImpl<TSource, TResult>(IEnumerable<TSource> source, Func<IList<TSource>, ScanRightSeedCount<TResult>> seeder, Func<TSource, TResult, TResult> func)
         {
+            var list = (source as IList<TSource>) ?? source.ToList();
+
+            var r = seeder(list);
+            var i = r.Count;
+            if (!r.Seeded)
+                yield break;
+            var accumulator = r.Seed;
             var stack = new Stack<TResult>(i + 1);
             stack.Push(accumulator);
 
@@ -109,7 +127,8 @@ namespace MoreLinq
                 stack.Push(accumulator);
             }
 
-            return stack;
+            foreach (var item in stack)
+                yield return item;
         }
     }
 }
