@@ -34,8 +34,14 @@ namespace MoreLinq.Test
         [Test, TestCaseSource(nameof(GetNotNullTestCases))]
         public void NotNull(TestCase testCase)
         {
-            Assert.ThrowsArgumentNullException(testCase.ParameterName,
-                () => testCase.Invoke());
+            var exception = testCase.Invoke();
+            Assert.That(exception, Is.InstanceOf<ArgumentNullException>());
+            var ane = (ArgumentNullException) exception;
+            Assert.That(ane.ParamName, Is.EqualTo(testCase.ParameterName));
+            var st = new StackTrace(ane, false);
+            var frame = st.GetFrames().First();
+            var actualType = frame.GetMethod().DeclaringType;
+            Assert.That(actualType, Is.SameAs(typeof(MoreEnumerable)));
         }
 
         [Test, TestCaseSource(nameof(GetCanBeNullTestCases))]
@@ -57,15 +63,16 @@ namespace MoreLinq.Test
                 ParameterName = parameterName;
             }
 
-            public object Invoke()
+            public Exception Invoke()
             {
                 try
                 {
-                    return Method.Invoke(null, Arguments);
+                    Method.Invoke(null, Arguments);
+                    return null;
                 }
                 catch (TargetInvocationException ex)
                 {
-                    throw ex.InnerException;
+                    return ex.InnerException;
                 }
             }
         }
