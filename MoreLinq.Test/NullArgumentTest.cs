@@ -32,52 +32,21 @@ namespace MoreLinq.Test
     public class NullArgumentTest
     {
         [Test, TestCaseSource(nameof(GetNotNullTestCases))]
-        public void NotNull(ITestCase testCase) =>
-            testCase.Invoke();
+        public void NotNull(Action testCase) =>
+            testCase();
 
         [Test, TestCaseSource(nameof(GetCanBeNullTestCases))]
-        public void CanBeNull(ITestCase testCase) =>
-            testCase.Invoke();
+        public void CanBeNull(Action testCase) =>
+            testCase();
 
-        public interface ITestCase { void Invoke(); }
-
-        abstract class TestCase : ITestCase
-        {
-            protected MethodInfo Method { get; }
-            protected object[] Arguments { get; }
-            protected string ParameterName { get; }
-
-            protected TestCase(MethodInfo method, object[] arguments, string parameterName)
-            {
-                Method = method;
-                Arguments = arguments;
-                ParameterName = parameterName;
-            }
-
-            public abstract void Invoke();
-        }
-
-        sealed class CanBeNullTestCase : TestCase
-        {
-            public CanBeNullTestCase(MethodInfo method, object[] arguments, string parameterName) :
-                base(method, arguments, parameterName) { }
-
-            public override void Invoke() =>
-                Method.Invoke(null, Arguments);
-        }
-
-        sealed class CannotBeNullTestCase : TestCase
-        {
-            public CannotBeNullTestCase(MethodInfo method, object[] arguments, string parameterName) :
-                base(method, arguments, parameterName) { }
-
-            public override void Invoke()
+        static IEnumerable<ITestCaseData> GetNotNullTestCases() =>
+            GetTestCases(canBeNull: false, testCaseFactory: (method, args, paramName) => () =>
             {
                 Exception e = null;
-                
+
                 try
                 {
-                    Method.Invoke(null, Arguments);
+                    method.Invoke(null, args);
                 }
                 catch (TargetInvocationException tie)
                 {
@@ -87,26 +56,22 @@ namespace MoreLinq.Test
                 Assert.That(e, Is.Not.Null, $"No exception was thrown when {nameof(ArgumentNullException)} was expected.");
                 Assert.That(e, Is.InstanceOf<ArgumentNullException>());
                 var ane = (ArgumentNullException) e;
-                Assert.That(ane.ParamName, Is.EqualTo(ParameterName));
+                Assert.That(ane.ParamName, Is.EqualTo(paramName));
                 var stackTrace = new StackTrace(ane, false);
                 var stackFrame = stackTrace.GetFrames().First();
                 var actualType = stackFrame.GetMethod().DeclaringType;
                 Assert.That(actualType, Is.SameAs(typeof(MoreEnumerable)));
-            }
-        }
-
-        static IEnumerable<ITestCaseData> GetNotNullTestCases() =>
-            GetTestCases(canBeNull: false, testCaseFactory: (m, args, pn) => new CannotBeNullTestCase(m, args, pn));
+            });
 
         static IEnumerable<ITestCaseData> GetCanBeNullTestCases() =>
-            GetTestCases(canBeNull: true, testCaseFactory: (m, args, pn) => new CanBeNullTestCase(m, args, pn));
+            GetTestCases(canBeNull: true, testCaseFactory: (method, args, _) => () => method.Invoke(null, args));
 
-        static IEnumerable<ITestCaseData> GetTestCases(bool canBeNull, Func<MethodInfo, object[], string, ITestCase> testCaseFactory) =>
+        static IEnumerable<ITestCaseData> GetTestCases(bool canBeNull, Func<MethodInfo, object[], string, Action> testCaseFactory) =>
             from m in typeof (MoreEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
             from t in CreateTestCases(m, canBeNull, testCaseFactory)
             select t;
 
-        static IEnumerable<ITestCaseData> CreateTestCases(MethodInfo methodDefinition, bool canBeNull, Func<MethodInfo, object[], string, ITestCase> testCaseFactory)
+        static IEnumerable<ITestCaseData> CreateTestCases(MethodInfo methodDefinition, bool canBeNull, Func<MethodInfo, object[], string, Action> testCaseFactory)
         {
             var method = InstantiateMethod(methodDefinition);
             var parameters = method.GetParameters().ToList();
