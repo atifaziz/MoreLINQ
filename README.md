@@ -20,6 +20,13 @@ Ensures that a source sequence of objects are all acquired successfully. If
 the acquisition of any one fails then those successfully acquired till that
 point are disposed
 
+### Aggregate
+
+Applies multiple (up to 16) accumulator functions over a sequence in a
+single iteration.
+
+This method has 15 overloads.
+
 ### AggregateRight
 
 Applies a right-associative accumulator function over a sequence.
