@@ -8,7 +8,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <VersionPrefix>2.6.0</VersionPrefix>
     <Authors>MoreLINQ Developers.</Authors>
-    <TargetFrameworks>net35;net40;netstandard1.0</TargetFrameworks>
+    <TargetFrameworks>netstandard1.0;net35;net40</TargetFrameworks>
     <LangVersion>7</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
@@ -62,7 +62,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net35' ">
-    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES;NO_OBSERVABLES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">

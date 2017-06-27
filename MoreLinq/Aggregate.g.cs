@@ -15,1081 +15,1388 @@
 // limitations under the License.
 #endregion
 
-#if !NO_VALUE_TUPLES
+#if !NO_OBSERVABLES
 
 namespace MoreLinq
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
 
     partial class MoreEnumerable
     {
         /// <summary>
-        /// Applies 2 accumulator functions over a sequence.
+        /// Applies 2 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            Func<TState1, TState2, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<TResult1, TResult2, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e)),
-                    s => resultSelector(s.Item1, s.Item2));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+
+            return resultSelector(c1(), c2());
         }
 
         /// <summary>
-        /// Applies 3 accumulator functions over a sequence.
+        /// Applies 3 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            Func<TState1, TState2, TState3, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<TResult1, TResult2, TResult3, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3());
         }
 
         /// <summary>
-        /// Applies 4 accumulator functions over a sequence.
+        /// Applies 4 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            Func<TState1, TState2, TState3, TState4, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4());
         }
 
         /// <summary>
-        /// Applies 5 accumulator functions over a sequence.
+        /// Applies 5 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            Func<TState1, TState2, TState3, TState4, TState5, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5());
         }
 
         /// <summary>
-        /// Applies 6 accumulator functions over a sequence.
+        /// Applies 6 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6());
         }
 
         /// <summary>
-        /// Applies 7 accumulator functions over a sequence.
+        /// Applies 7 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7());
         }
 
         /// <summary>
-        /// Applies 8 accumulator functions over a sequence.
+        /// Applies 8 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8());
         }
 
         /// <summary>
-        /// Applies 9 accumulator functions over a sequence.
+        /// Applies 9 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9());
         }
 
         /// <summary>
-        /// Applies 10 accumulator functions over a sequence.
+        /// Applies 10 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10());
         }
 
         /// <summary>
-        /// Applies 11 accumulator functions over a sequence.
+        /// Applies 11 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
-        /// <typeparam name="TState11">The type of the eleventh accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult11">The type of the eleventh accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed11">The eleventh initial accumulator value.</param>
-        /// <param name="accumulator11">The eleventh accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector11">
+        /// The eleventh function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            TState11 seed11, Func<TState11, TSource, TState11> accumulator11,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<IObservable<TSource>, Func<TResult11>> aggregatorConnector11,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
-            if (accumulator11 == null) throw new ArgumentNullException(nameof(accumulator11));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
+            if (aggregatorConnector11 == null) throw new ArgumentNullException(nameof(aggregatorConnector11));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10, seed11),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e),
-                               accumulator11(s.Item11, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10, s.Item11));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+            var s11 = new Subject<TSource>(); var c11 = aggregatorConnector11(s11);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+                s11.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+            s11.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10(), c11());
         }
 
         /// <summary>
-        /// Applies 12 accumulator functions over a sequence.
+        /// Applies 12 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
-        /// <typeparam name="TState11">The type of the eleventh accumulator value.</typeparam>
-        /// <typeparam name="TState12">The type of the twelfth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult11">The type of the eleventh accumulator value.</typeparam>
+        /// <typeparam name="TResult12">The type of the twelfth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed11">The eleventh initial accumulator value.</param>
-        /// <param name="accumulator11">The eleventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed12">The twelfth initial accumulator value.</param>
-        /// <param name="accumulator12">The twelfth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector11">
+        /// The eleventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector12">
+        /// The twelfth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            TState11 seed11, Func<TState11, TSource, TState11> accumulator11,
-            TState12 seed12, Func<TState12, TSource, TState12> accumulator12,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<IObservable<TSource>, Func<TResult11>> aggregatorConnector11,
+            Func<IObservable<TSource>, Func<TResult12>> aggregatorConnector12,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
-            if (accumulator11 == null) throw new ArgumentNullException(nameof(accumulator11));
-            if (accumulator12 == null) throw new ArgumentNullException(nameof(accumulator12));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
+            if (aggregatorConnector11 == null) throw new ArgumentNullException(nameof(aggregatorConnector11));
+            if (aggregatorConnector12 == null) throw new ArgumentNullException(nameof(aggregatorConnector12));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10, seed11, seed12),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e),
-                               accumulator11(s.Item11, e),
-                               accumulator12(s.Item12, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10, s.Item11, s.Item12));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+            var s11 = new Subject<TSource>(); var c11 = aggregatorConnector11(s11);
+            var s12 = new Subject<TSource>(); var c12 = aggregatorConnector12(s12);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+                s11.OnNext(item);
+                s12.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+            s11.OnCompleted();
+            s12.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10(), c11(), c12());
         }
 
         /// <summary>
-        /// Applies 13 accumulator functions over a sequence.
+        /// Applies 13 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
-        /// <typeparam name="TState11">The type of the eleventh accumulator value.</typeparam>
-        /// <typeparam name="TState12">The type of the twelfth accumulator value.</typeparam>
-        /// <typeparam name="TState13">The type of the thirteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult11">The type of the eleventh accumulator value.</typeparam>
+        /// <typeparam name="TResult12">The type of the twelfth accumulator value.</typeparam>
+        /// <typeparam name="TResult13">The type of the thirteenth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed11">The eleventh initial accumulator value.</param>
-        /// <param name="accumulator11">The eleventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed12">The twelfth initial accumulator value.</param>
-        /// <param name="accumulator12">The twelfth accumulator function to be invoked on each element.</param>
-        /// <param name="seed13">The thirteenth initial accumulator value.</param>
-        /// <param name="accumulator13">The thirteenth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector11">
+        /// The eleventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector12">
+        /// The twelfth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector13">
+        /// The thirteenth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            TState11 seed11, Func<TState11, TSource, TState11> accumulator11,
-            TState12 seed12, Func<TState12, TSource, TState12> accumulator12,
-            TState13 seed13, Func<TState13, TSource, TState13> accumulator13,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<IObservable<TSource>, Func<TResult11>> aggregatorConnector11,
+            Func<IObservable<TSource>, Func<TResult12>> aggregatorConnector12,
+            Func<IObservable<TSource>, Func<TResult13>> aggregatorConnector13,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
-            if (accumulator11 == null) throw new ArgumentNullException(nameof(accumulator11));
-            if (accumulator12 == null) throw new ArgumentNullException(nameof(accumulator12));
-            if (accumulator13 == null) throw new ArgumentNullException(nameof(accumulator13));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
+            if (aggregatorConnector11 == null) throw new ArgumentNullException(nameof(aggregatorConnector11));
+            if (aggregatorConnector12 == null) throw new ArgumentNullException(nameof(aggregatorConnector12));
+            if (aggregatorConnector13 == null) throw new ArgumentNullException(nameof(aggregatorConnector13));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10, seed11, seed12, seed13),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e),
-                               accumulator11(s.Item11, e),
-                               accumulator12(s.Item12, e),
-                               accumulator13(s.Item13, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10, s.Item11, s.Item12, s.Item13));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+            var s11 = new Subject<TSource>(); var c11 = aggregatorConnector11(s11);
+            var s12 = new Subject<TSource>(); var c12 = aggregatorConnector12(s12);
+            var s13 = new Subject<TSource>(); var c13 = aggregatorConnector13(s13);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+                s11.OnNext(item);
+                s12.OnNext(item);
+                s13.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+            s11.OnCompleted();
+            s12.OnCompleted();
+            s13.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10(), c11(), c12(), c13());
         }
 
         /// <summary>
-        /// Applies 14 accumulator functions over a sequence.
+        /// Applies 14 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
-        /// <typeparam name="TState11">The type of the eleventh accumulator value.</typeparam>
-        /// <typeparam name="TState12">The type of the twelfth accumulator value.</typeparam>
-        /// <typeparam name="TState13">The type of the thirteenth accumulator value.</typeparam>
-        /// <typeparam name="TState14">The type of the fourteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult11">The type of the eleventh accumulator value.</typeparam>
+        /// <typeparam name="TResult12">The type of the twelfth accumulator value.</typeparam>
+        /// <typeparam name="TResult13">The type of the thirteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult14">The type of the fourteenth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed11">The eleventh initial accumulator value.</param>
-        /// <param name="accumulator11">The eleventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed12">The twelfth initial accumulator value.</param>
-        /// <param name="accumulator12">The twelfth accumulator function to be invoked on each element.</param>
-        /// <param name="seed13">The thirteenth initial accumulator value.</param>
-        /// <param name="accumulator13">The thirteenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed14">The fourteenth initial accumulator value.</param>
-        /// <param name="accumulator14">The fourteenth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector11">
+        /// The eleventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector12">
+        /// The twelfth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector13">
+        /// The thirteenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector14">
+        /// The fourteenth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TState14, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            TState11 seed11, Func<TState11, TSource, TState11> accumulator11,
-            TState12 seed12, Func<TState12, TSource, TState12> accumulator12,
-            TState13 seed13, Func<TState13, TSource, TState13> accumulator13,
-            TState14 seed14, Func<TState14, TSource, TState14> accumulator14,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TState14, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<IObservable<TSource>, Func<TResult11>> aggregatorConnector11,
+            Func<IObservable<TSource>, Func<TResult12>> aggregatorConnector12,
+            Func<IObservable<TSource>, Func<TResult13>> aggregatorConnector13,
+            Func<IObservable<TSource>, Func<TResult14>> aggregatorConnector14,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
-            if (accumulator11 == null) throw new ArgumentNullException(nameof(accumulator11));
-            if (accumulator12 == null) throw new ArgumentNullException(nameof(accumulator12));
-            if (accumulator13 == null) throw new ArgumentNullException(nameof(accumulator13));
-            if (accumulator14 == null) throw new ArgumentNullException(nameof(accumulator14));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
+            if (aggregatorConnector11 == null) throw new ArgumentNullException(nameof(aggregatorConnector11));
+            if (aggregatorConnector12 == null) throw new ArgumentNullException(nameof(aggregatorConnector12));
+            if (aggregatorConnector13 == null) throw new ArgumentNullException(nameof(aggregatorConnector13));
+            if (aggregatorConnector14 == null) throw new ArgumentNullException(nameof(aggregatorConnector14));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10, seed11, seed12, seed13, seed14),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e),
-                               accumulator11(s.Item11, e),
-                               accumulator12(s.Item12, e),
-                               accumulator13(s.Item13, e),
-                               accumulator14(s.Item14, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10, s.Item11, s.Item12, s.Item13, s.Item14));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+            var s11 = new Subject<TSource>(); var c11 = aggregatorConnector11(s11);
+            var s12 = new Subject<TSource>(); var c12 = aggregatorConnector12(s12);
+            var s13 = new Subject<TSource>(); var c13 = aggregatorConnector13(s13);
+            var s14 = new Subject<TSource>(); var c14 = aggregatorConnector14(s14);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+                s11.OnNext(item);
+                s12.OnNext(item);
+                s13.OnNext(item);
+                s14.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+            s11.OnCompleted();
+            s12.OnCompleted();
+            s13.OnCompleted();
+            s14.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10(), c11(), c12(), c13(), c14());
         }
 
         /// <summary>
-        /// Applies 15 accumulator functions over a sequence.
+        /// Applies 15 accumulators over a sequence.
         /// </summary>
         /// <typeparam name="TSource">
         /// The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <typeparam name="TState1">The type of the first accumulator value.</typeparam>
-        /// <typeparam name="TState2">The type of the second accumulator value.</typeparam>
-        /// <typeparam name="TState3">The type of the third accumulator value.</typeparam>
-        /// <typeparam name="TState4">The type of the fourth accumulator value.</typeparam>
-        /// <typeparam name="TState5">The type of the fifth accumulator value.</typeparam>
-        /// <typeparam name="TState6">The type of the sixth accumulator value.</typeparam>
-        /// <typeparam name="TState7">The type of the seventh accumulator value.</typeparam>
-        /// <typeparam name="TState8">The type of the eighth accumulator value.</typeparam>
-        /// <typeparam name="TState9">The type of the ninth accumulator value.</typeparam>
-        /// <typeparam name="TState10">The type of the tenth accumulator value.</typeparam>
-        /// <typeparam name="TState11">The type of the eleventh accumulator value.</typeparam>
-        /// <typeparam name="TState12">The type of the twelfth accumulator value.</typeparam>
-        /// <typeparam name="TState13">The type of the thirteenth accumulator value.</typeparam>
-        /// <typeparam name="TState14">The type of the fourteenth accumulator value.</typeparam>
-        /// <typeparam name="TState15">The type of the fifteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult1">The type of the first accumulator value.</typeparam>
+        /// <typeparam name="TResult2">The type of the second accumulator value.</typeparam>
+        /// <typeparam name="TResult3">The type of the third accumulator value.</typeparam>
+        /// <typeparam name="TResult4">The type of the fourth accumulator value.</typeparam>
+        /// <typeparam name="TResult5">The type of the fifth accumulator value.</typeparam>
+        /// <typeparam name="TResult6">The type of the sixth accumulator value.</typeparam>
+        /// <typeparam name="TResult7">The type of the seventh accumulator value.</typeparam>
+        /// <typeparam name="TResult8">The type of the eighth accumulator value.</typeparam>
+        /// <typeparam name="TResult9">The type of the ninth accumulator value.</typeparam>
+        /// <typeparam name="TResult10">The type of the tenth accumulator value.</typeparam>
+        /// <typeparam name="TResult11">The type of the eleventh accumulator value.</typeparam>
+        /// <typeparam name="TResult12">The type of the twelfth accumulator value.</typeparam>
+        /// <typeparam name="TResult13">The type of the thirteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult14">The type of the fourteenth accumulator value.</typeparam>
+        /// <typeparam name="TResult15">The type of the fifteenth accumulator value.</typeparam>
         /// <typeparam name="TResult">The type of the resulting value.</typeparam>
         /// <param name="source">The sequence to aggregate over.</param>
-        /// <param name="seed1">The first initial accumulator value.</param>
-        /// <param name="accumulator1">The first accumulator function to be invoked on each element.</param>
-        /// <param name="seed2">The second initial accumulator value.</param>
-        /// <param name="accumulator2">The second accumulator function to be invoked on each element.</param>
-        /// <param name="seed3">The third initial accumulator value.</param>
-        /// <param name="accumulator3">The third accumulator function to be invoked on each element.</param>
-        /// <param name="seed4">The fourth initial accumulator value.</param>
-        /// <param name="accumulator4">The fourth accumulator function to be invoked on each element.</param>
-        /// <param name="seed5">The fifth initial accumulator value.</param>
-        /// <param name="accumulator5">The fifth accumulator function to be invoked on each element.</param>
-        /// <param name="seed6">The sixth initial accumulator value.</param>
-        /// <param name="accumulator6">The sixth accumulator function to be invoked on each element.</param>
-        /// <param name="seed7">The seventh initial accumulator value.</param>
-        /// <param name="accumulator7">The seventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed8">The eighth initial accumulator value.</param>
-        /// <param name="accumulator8">The eighth accumulator function to be invoked on each element.</param>
-        /// <param name="seed9">The ninth initial accumulator value.</param>
-        /// <param name="accumulator9">The ninth accumulator function to be invoked on each element.</param>
-        /// <param name="seed10">The tenth initial accumulator value.</param>
-        /// <param name="accumulator10">The tenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed11">The eleventh initial accumulator value.</param>
-        /// <param name="accumulator11">The eleventh accumulator function to be invoked on each element.</param>
-        /// <param name="seed12">The twelfth initial accumulator value.</param>
-        /// <param name="accumulator12">The twelfth accumulator function to be invoked on each element.</param>
-        /// <param name="seed13">The thirteenth initial accumulator value.</param>
-        /// <param name="accumulator13">The thirteenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed14">The fourteenth initial accumulator value.</param>
-        /// <param name="accumulator14">The fourteenth accumulator function to be invoked on each element.</param>
-        /// <param name="seed15">The fifteenth initial accumulator value.</param>
-        /// <param name="accumulator15">The fifteenth accumulator function to be invoked on each element.</param>
+        /// <param name="aggregatorConnector1">
+        /// The first function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector2">
+        /// The second function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector3">
+        /// The third function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector4">
+        /// The fourth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector5">
+        /// The fifth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector6">
+        /// The sixth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector7">
+        /// The seventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector8">
+        /// The eighth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector9">
+        /// The ninth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector10">
+        /// The tenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector11">
+        /// The eleventh function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector12">
+        /// The twelfth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector13">
+        /// The thirteenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector14">
+        /// The fourteenth function that connects an accumulator to the source.</param>
+        /// <param name="aggregatorConnector15">
+        /// The fifteenth function that connects an accumulator to the source.</param>
         /// <param name="resultSelector">
         /// A function to transform the final accumulator value into the result value.</param>
         /// <returns>The transformed final accumulator value.</returns>
         /// <remarks>This method uses immediate execution semantics.</remarks>
 
-        public static TResult Aggregate<TSource, TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TState14, TState15, TResult>(
+        public static TResult Aggregate<TSource, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15, TResult>(
             this IEnumerable<TSource> source,
-            TState1 seed1, Func<TState1, TSource, TState1> accumulator1,
-            TState2 seed2, Func<TState2, TSource, TState2> accumulator2,
-            TState3 seed3, Func<TState3, TSource, TState3> accumulator3,
-            TState4 seed4, Func<TState4, TSource, TState4> accumulator4,
-            TState5 seed5, Func<TState5, TSource, TState5> accumulator5,
-            TState6 seed6, Func<TState6, TSource, TState6> accumulator6,
-            TState7 seed7, Func<TState7, TSource, TState7> accumulator7,
-            TState8 seed8, Func<TState8, TSource, TState8> accumulator8,
-            TState9 seed9, Func<TState9, TSource, TState9> accumulator9,
-            TState10 seed10, Func<TState10, TSource, TState10> accumulator10,
-            TState11 seed11, Func<TState11, TSource, TState11> accumulator11,
-            TState12 seed12, Func<TState12, TSource, TState12> accumulator12,
-            TState13 seed13, Func<TState13, TSource, TState13> accumulator13,
-            TState14 seed14, Func<TState14, TSource, TState14> accumulator14,
-            TState15 seed15, Func<TState15, TSource, TState15> accumulator15,
-            Func<TState1, TState2, TState3, TState4, TState5, TState6, TState7, TState8, TState9, TState10, TState11, TState12, TState13, TState14, TState15, TResult> resultSelector)
+            Func<IObservable<TSource>, Func<TResult1>> aggregatorConnector1,
+            Func<IObservable<TSource>, Func<TResult2>> aggregatorConnector2,
+            Func<IObservable<TSource>, Func<TResult3>> aggregatorConnector3,
+            Func<IObservable<TSource>, Func<TResult4>> aggregatorConnector4,
+            Func<IObservable<TSource>, Func<TResult5>> aggregatorConnector5,
+            Func<IObservable<TSource>, Func<TResult6>> aggregatorConnector6,
+            Func<IObservable<TSource>, Func<TResult7>> aggregatorConnector7,
+            Func<IObservable<TSource>, Func<TResult8>> aggregatorConnector8,
+            Func<IObservable<TSource>, Func<TResult9>> aggregatorConnector9,
+            Func<IObservable<TSource>, Func<TResult10>> aggregatorConnector10,
+            Func<IObservable<TSource>, Func<TResult11>> aggregatorConnector11,
+            Func<IObservable<TSource>, Func<TResult12>> aggregatorConnector12,
+            Func<IObservable<TSource>, Func<TResult13>> aggregatorConnector13,
+            Func<IObservable<TSource>, Func<TResult14>> aggregatorConnector14,
+            Func<IObservable<TSource>, Func<TResult15>> aggregatorConnector15,
+            Func<TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (accumulator1 == null) throw new ArgumentNullException(nameof(accumulator1));
-            if (accumulator2 == null) throw new ArgumentNullException(nameof(accumulator2));
-            if (accumulator3 == null) throw new ArgumentNullException(nameof(accumulator3));
-            if (accumulator4 == null) throw new ArgumentNullException(nameof(accumulator4));
-            if (accumulator5 == null) throw new ArgumentNullException(nameof(accumulator5));
-            if (accumulator6 == null) throw new ArgumentNullException(nameof(accumulator6));
-            if (accumulator7 == null) throw new ArgumentNullException(nameof(accumulator7));
-            if (accumulator8 == null) throw new ArgumentNullException(nameof(accumulator8));
-            if (accumulator9 == null) throw new ArgumentNullException(nameof(accumulator9));
-            if (accumulator10 == null) throw new ArgumentNullException(nameof(accumulator10));
-            if (accumulator11 == null) throw new ArgumentNullException(nameof(accumulator11));
-            if (accumulator12 == null) throw new ArgumentNullException(nameof(accumulator12));
-            if (accumulator13 == null) throw new ArgumentNullException(nameof(accumulator13));
-            if (accumulator14 == null) throw new ArgumentNullException(nameof(accumulator14));
-            if (accumulator15 == null) throw new ArgumentNullException(nameof(accumulator15));
+            if (aggregatorConnector1 == null) throw new ArgumentNullException(nameof(aggregatorConnector1));
+            if (aggregatorConnector2 == null) throw new ArgumentNullException(nameof(aggregatorConnector2));
+            if (aggregatorConnector3 == null) throw new ArgumentNullException(nameof(aggregatorConnector3));
+            if (aggregatorConnector4 == null) throw new ArgumentNullException(nameof(aggregatorConnector4));
+            if (aggregatorConnector5 == null) throw new ArgumentNullException(nameof(aggregatorConnector5));
+            if (aggregatorConnector6 == null) throw new ArgumentNullException(nameof(aggregatorConnector6));
+            if (aggregatorConnector7 == null) throw new ArgumentNullException(nameof(aggregatorConnector7));
+            if (aggregatorConnector8 == null) throw new ArgumentNullException(nameof(aggregatorConnector8));
+            if (aggregatorConnector9 == null) throw new ArgumentNullException(nameof(aggregatorConnector9));
+            if (aggregatorConnector10 == null) throw new ArgumentNullException(nameof(aggregatorConnector10));
+            if (aggregatorConnector11 == null) throw new ArgumentNullException(nameof(aggregatorConnector11));
+            if (aggregatorConnector12 == null) throw new ArgumentNullException(nameof(aggregatorConnector12));
+            if (aggregatorConnector13 == null) throw new ArgumentNullException(nameof(aggregatorConnector13));
+            if (aggregatorConnector14 == null) throw new ArgumentNullException(nameof(aggregatorConnector14));
+            if (aggregatorConnector15 == null) throw new ArgumentNullException(nameof(aggregatorConnector15));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            return
-                source.Aggregate(
-                    (seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9, seed10, seed11, seed12, seed13, seed14, seed15),
-                    (s, e) => (accumulator1(s.Item1, e),
-                               accumulator2(s.Item2, e),
-                               accumulator3(s.Item3, e),
-                               accumulator4(s.Item4, e),
-                               accumulator5(s.Item5, e),
-                               accumulator6(s.Item6, e),
-                               accumulator7(s.Item7, e),
-                               accumulator8(s.Item8, e),
-                               accumulator9(s.Item9, e),
-                               accumulator10(s.Item10, e),
-                               accumulator11(s.Item11, e),
-                               accumulator12(s.Item12, e),
-                               accumulator13(s.Item13, e),
-                               accumulator14(s.Item14, e),
-                               accumulator15(s.Item15, e)),
-                    s => resultSelector(s.Item1, s.Item2, s.Item3, s.Item4, s.Item5, s.Item6, s.Item7, s.Item8, s.Item9, s.Item10, s.Item11, s.Item12, s.Item13, s.Item14, s.Item15));
+            var s1 = new Subject<TSource>(); var c1 = aggregatorConnector1(s1);
+            var s2 = new Subject<TSource>(); var c2 = aggregatorConnector2(s2);
+            var s3 = new Subject<TSource>(); var c3 = aggregatorConnector3(s3);
+            var s4 = new Subject<TSource>(); var c4 = aggregatorConnector4(s4);
+            var s5 = new Subject<TSource>(); var c5 = aggregatorConnector5(s5);
+            var s6 = new Subject<TSource>(); var c6 = aggregatorConnector6(s6);
+            var s7 = new Subject<TSource>(); var c7 = aggregatorConnector7(s7);
+            var s8 = new Subject<TSource>(); var c8 = aggregatorConnector8(s8);
+            var s9 = new Subject<TSource>(); var c9 = aggregatorConnector9(s9);
+            var s10 = new Subject<TSource>(); var c10 = aggregatorConnector10(s10);
+            var s11 = new Subject<TSource>(); var c11 = aggregatorConnector11(s11);
+            var s12 = new Subject<TSource>(); var c12 = aggregatorConnector12(s12);
+            var s13 = new Subject<TSource>(); var c13 = aggregatorConnector13(s13);
+            var s14 = new Subject<TSource>(); var c14 = aggregatorConnector14(s14);
+            var s15 = new Subject<TSource>(); var c15 = aggregatorConnector15(s15);
+
+            // TODO OnError
+
+            foreach (var item in source)
+            {
+                s1.OnNext(item);
+                s2.OnNext(item);
+                s3.OnNext(item);
+                s4.OnNext(item);
+                s5.OnNext(item);
+                s6.OnNext(item);
+                s7.OnNext(item);
+                s8.OnNext(item);
+                s9.OnNext(item);
+                s10.OnNext(item);
+                s11.OnNext(item);
+                s12.OnNext(item);
+                s13.OnNext(item);
+                s14.OnNext(item);
+                s15.OnNext(item);
+            }
+
+            s1.OnCompleted();
+            s2.OnCompleted();
+            s3.OnCompleted();
+            s4.OnCompleted();
+            s5.OnCompleted();
+            s6.OnCompleted();
+            s7.OnCompleted();
+            s8.OnCompleted();
+            s9.OnCompleted();
+            s10.OnCompleted();
+            s11.OnCompleted();
+            s12.OnCompleted();
+            s13.OnCompleted();
+            s14.OnCompleted();
+            s15.OnCompleted();
+
+            return resultSelector(c1(), c2(), c3(), c4(), c5(), c6(), c7(), c8(), c9(), c10(), c11(), c12(), c13(), c14(), c15());
         }
 
     }
 }
 
-#endif // !NO_VALUE_TUPLES
+#endif // !NO_OBSERVABLES
