@@ -8,7 +8,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <VersionPrefix>2.6.0</VersionPrefix>
     <Authors>MoreLINQ Developers.</Authors>
-    <TargetFrameworks>net35;net40;netstandard1.0</TargetFrameworks>
+    <TargetFrameworks>netstandard1.0;net35;net40</TargetFrameworks>
     <LangVersion>7</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
@@ -36,6 +36,10 @@
     <None Update="..\COPYING.txt;..\lic\corefx\LICENSE">
       <Pack>true</Pack>
     </None>
+    <None Update="Aggregate.g.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Aggregate.g.cs</LastGenOutput>
+    </None>
     <None Update="Fold.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Fold.g.cs</LastGenOutput>
@@ -58,7 +62,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net35' ">
-    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES;NO_OBSERVABLES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
@@ -84,6 +88,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Aggregate.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Aggregate.g.tt</DependentUpon>
+    </Compile>
     <Compile Update="Fold.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
