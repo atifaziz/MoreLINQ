@@ -56,7 +56,7 @@ namespace MoreLinq
         /// <param name="source">The sequence to aggregate over.</param>
 <#      foreach (var m in ns)
         { #>
-        /// <param name="<#= T("aggregatorConnector", m) #>">
+        /// <param name="<#= T("aggregatorSelector", m) #>">
         /// The <#= ordinals[m] #> function that connects an accumulator to the source.</param>
 <#      } #>
         /// <param name="resultSelector">
@@ -68,38 +68,44 @@ namespace MoreLinq
             this IEnumerable<TSource> source,
 <#      foreach (var m in ns)
         { #>
-            Func<IObservable<TSource>, Func<<#= T("TResult", m) #>>> <#= T("aggregatorConnector", m) #>,
+            Func<IObservable<TSource>, IObservable<<#= T("TResult", m) #>>> <#= T("aggregatorSelector", m) #>,
 <#      } #>
             Func<<#= string.Join(", ", from m in ns select T("TResult", m)) #>, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 <#      foreach (var m in ns)
         { #>
-            if (<#= T("aggregatorConnector", m) #> == null) throw new ArgumentNullException(nameof(<#= T("aggregatorConnector", m) #>));
+            if (<#= T("aggregatorSelector", m) #> == null) throw new ArgumentNullException(nameof(<#= T("aggregatorSelector", m) #>));
 <#      } #>
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
 <#      foreach (var m in ns)
         { #>
-            var <#= T("s", m) #> = new Subject<TSource>(); var <#= T("c", m) #> = <#= T("aggregatorConnector", m) #>(<#= T("s", m) #>);
+            var <#= T("r", m) #> = new <#= T("TResult", m) #>[1]; var <#= T("s", m) #> = new Subject<TSource>();
 <#      } #>
 
             // TODO OnError
 
-            foreach (var item in source)
-            {
 <#      foreach (var m in ns)
         { #>
-                <#= T("s", m) #>.OnNext(item);
+            using (<#= T("aggregatorSelector", m) #>(<#= T("s", m) #>).Subscribe(Observer.Create((<#= T("TResult", m) #> r) => <#= T("r", m) #>[0] = r)))
+<#      } #>
+            {
+                foreach (var item in source)
+                {
+<#      foreach (var m in ns)
+        { #>
+                    <#= T("s", m) #>.OnNext(item);
+<#      } #>
+                }
+
+<#      foreach (var m in ns)
+        { #>
+                <#= T("s", m) #>.OnCompleted();
 <#      } #>
             }
 
-<#      foreach (var m in ns)
-        { #>
-            <#= T("s", m) #>.OnCompleted();
-<#      } #>
-
-            return resultSelector(<#= string.Join(", ", from m in ns select T("c", m) + "()") #>);
+            return resultSelector(<#= string.Join(", ", from m in ns select T("r", m) + "[0]") #>);
         }
 
 <#  } #>
