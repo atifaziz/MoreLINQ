@@ -23,43 +23,81 @@ namespace MoreLinq
     using System.Collections.Generic;
 
     /// <summary>
-    /// Aggregators for use in concurrent aggregations.
+    /// TODO
     /// </summary>
 
-    public static class Aggregator
+    public interface IConnected<out T>
     {
+        /// <summary>
+        /// TODO
+        /// </summary>
+
+        Func<TResult> Connect<TState, TResult>(
+            TState seed, Func<TState, T, TState> accumulator,
+            Func<TState, TResult> resultSelector);
+    }
+
+    sealed class Connected<T> : IConnected<T>
+    {
+        readonly IObservable<T> _source;
+
+        public Connected(IObservable<T> source) => _source = source;
+
+        public Func<TResult> Connect<TState, TResult>(
+            TState seed, Func<TState, T, TState> accumulator,
+            Func<TState, TResult> resultSelector)
+        {
+            var state = seed;
+            var a = accumulator;
+            IDisposable subscription = null;
+            void DisposeSubscription()
+            {
+                if (subscription == null)
+                    return;
+                subscription.Dispose();
+                subscription = null;
+            }
+            subscription = _source.Subscribe(Observer.Create((T item) => state = a(state, item), _ => DisposeSubscription(), DisposeSubscription));
+            return () => resultSelector(state);
+        }
+    }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
+
+    public static class Connected
+    {
+        /// <summary>
+        /// TODO
+        /// </summary>
+
+        public static IConnected<T> Connect<T>(this IObservable<T> source) =>
+            new Connected<T>(source);
+
         /// <summary>
         /// Subscribes an accumulator function to the source and returns a
         /// function for retrieving the accumulated state.
         /// </summary>
 
         public static Func<TState> Connect<TState, T>(
-            this IObservable<T> source,
+            this IConnected<T> source,
             TState seed, Func<TState, T, TState> accumulator) =>
             source.Connect(seed, accumulator, s => s);
+    }
 
-        /// <summary>
-        /// Subscribes an accumulator function to the source and returns a
-        /// function for retrieving the result of the accumulation.
-        /// </summary>
+    /// <summary>
+    /// Aggregators for use in concurrent aggregations.
+    /// </summary>
 
-        public static Func<TResult> Connect<TState, T, TResult>(
-            this IObservable<T> source,
-            TState seed, Func<TState, T, TState> accumulator,
-            Func<TState, TResult> resultSelector)
-        {
-            var state = seed;
-            // TODO dispose subscription
-            source.Subscribe(Observer.Create((T item) => state = accumulator(state, item)));
-            return () => resultSelector(state);
-        }
-
+    public static class Aggregator
+    {
         /// <summary>
         /// Subscribes to the source and returns a function that can be used
         /// to retrieve the sum of integers observed on the source.
         /// </summary>
 
-        public static Func<int> Sum(this IObservable<int> source) =>
+        public static Func<int> Sum(this IConnected<int> source) =>
             source.Connect(0, (s, x) => s + x);
 
         /// <summary>
@@ -67,7 +105,7 @@ namespace MoreLinq
         /// to retrieve the count of elements observed on the source.
         /// </summary>
 
-        public static Func<int> Count<T>(this IObservable<T> source) =>
+        public static Func<int> Count<T>(this IConnected<T> source) =>
             source.Connect(0, (s, _) => s + 1);
 
         /// <summary>
@@ -80,7 +118,7 @@ namespace MoreLinq
         /// if no elements were observed from the source.
         /// </remarks>
 
-        public static Func<T> Some<T>(this IObservable<T> source, Func<T, T, T> accumulator) =>
+        public static Func<T> Some<T>(this IConnected<T> source, Func<T, T, T> accumulator) =>
             source.Connect(
                 (Count: 0, State: default(T)),
                 (s, e) => (s.Count + 1, s.Count > 0 ? accumulator(s.State, e) : e),
@@ -91,7 +129,7 @@ namespace MoreLinq
         /// to retrieve the smallest element observed on the source.
         /// </summary>
 
-        public static Func<T> Min<T>(this IObservable<T> source)
+        public static Func<T> Min<T>(this IConnected<T> source)
             where T : IComparable<T> =>
             source.Some((x, y) => x.CompareTo(y) < 0 ? x : y);
 
@@ -100,7 +138,7 @@ namespace MoreLinq
         /// to retrieve the largest element observed on the source.
         /// </summary>
 
-        public static Func<T> Max<T>(this IObservable<T> source)
+        public static Func<T> Max<T>(this IConnected<T> source)
             where T : IComparable<T> =>
             source.Some((x, y) => x.CompareTo(y) > 0 ? x : y);
 
@@ -110,7 +148,7 @@ namespace MoreLinq
         /// source.
         /// </summary>
 
-        public static Func<List<T>> List<T>(this IObservable<T> source) =>
+        public static Func<List<T>> List<T>(this IConnected<T> source) =>
             source.Collect(new List<T>());
 
         /// <summary>
@@ -119,7 +157,7 @@ namespace MoreLinq
         /// source.
         /// </summary>
 
-        public static Func<ISet<T>> Distinct<T>(this IObservable<T> source, IEqualityComparer<T> comparer = null) =>
+        public static Func<ISet<T>> Distinct<T>(this IConnected<T> source, IEqualityComparer<T> comparer = null) =>
             source.Collect(new HashSet<T>(comparer));
 
         /// <summary>
@@ -128,7 +166,7 @@ namespace MoreLinq
         /// source added to it.
         /// </summary>
 
-        public static Func<TCollection> Collect<T, TCollection>(this IObservable<T> source, TCollection collection)
+        public static Func<TCollection> Collect<T, TCollection>(this IConnected<T> source, TCollection collection)
             where TCollection : ICollection<T> =>
             source.Connect(collection, (s, t) => { s.Add(t); return s; }, s => s);
     }
