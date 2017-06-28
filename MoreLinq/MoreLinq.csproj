@@ -3,14 +3,14 @@
   <PropertyGroup>
     <Title>MoreLINQ</Title>
     <Description>This project enhances LINQ to Objects with the following methods: Acquire, AggregateRight, Assert, AssertCount, AtLeast, AtMost, Batch, Cartesian, CountBetween, CountBy, Concat, Consume, DistinctBy, EndsWith, EquiZip, Exactly, ExceptBy, Exclude, FallbackIfEmpty, FillBackward, FillForward, Fold, ForEach, FullGroupJoin, Generate, GenerateByIndex, GroupAdjacent, Incremental, Index, Interleave, Lag, Lead, MaxBy, MinBy, NestedLoops, OrderBy, OrderedMerge, Pad, Pairwise, PartialSort, PartialSortBy, Partition, Permutations, Pipe, Prepend, PreScan, Random, RandomDouble, RandomSubset, Rank, RankBy, Repeat, RunLengthEncode, Scan, ScanRight, Segment, Sequence, SingleOrFallback, SkipLast, SkipUntil, Slice, SortedMerge, Split, StartsWith, Subsets, TagFirstLast, TakeEvery, TakeLast, TakeUntil, ThenBy, ToArrayByIndex, ToDataTable, ToDelimitedString, ToDictionary, ToHashSet, ToLookup, Trace, TraverseBreadthFirst, TraverseDepthFirst, Unfold, Windowed, ZipLongest, ZipShortest</Description>
-    <Copyright>&#169; 2008 Jonathan Skeet. Portions &#169; 2009 Atif Aziz, Chris Ammerman, Konrad Rudolph. Portions &#169; 2010 Johannes Rudolph, Leopold Bushkin. Portions &#169; 2015 Felipe Sateler, &#8220;sholland&#8221;. Portions &#169; 2016 Andreas Gullberg Larsen, Leandro F. Vieira (leandromoh). Portions &#169; Microsoft. All rights reserved.</Copyright>
+    <Copyright>© 2008 Jonathan Skeet. Portions © 2009 Atif Aziz, Chris Ammerman, Konrad Rudolph. Portions © 2010 Johannes Rudolph, Leopold Bushkin. Portions © 2015 Felipe Sateler, “sholland”. Portions © 2016 Andreas Gullberg Larsen, Leandro F. Vieira (leandromoh). Portions © Microsoft. All rights reserved.</Copyright>
     <AssemblyTitle>MoreLINQ</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
     <VersionPrefix>2.6.0</VersionPrefix>
     <Authors>MoreLINQ Developers.</Authors>
-    <TargetFrameworks>net35;net40;netstandard1.0</TargetFrameworks>
+    <TargetFrameworks>netstandard1.0;net35;net40</TargetFrameworks>
     <LangVersion>7</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <DebugType>portable</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>MoreLinq</AssemblyName>
@@ -36,6 +36,10 @@
     <None Update="..\COPYING.txt;..\lic\corefx\LICENSE">
       <Pack>true</Pack>
     </None>
+    <None Update="Aggregate.g.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Aggregate.g.cs</LastGenOutput>
+    </None>
     <None Update="Fold.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Fold.g.cs</LastGenOutput>
@@ -58,7 +62,7 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net35' ">
-    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);MORELINQ;NO_VALUE_TUPLES;NO_OBSERVABLES</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
@@ -67,6 +71,11 @@
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.0' ">
     <DefineConstants>$(DefineConstants);MORELINQ;FUNC16;NO_SERIALIZATION_ATTRIBUTES;NO_EXCEPTION_SERIALIZATION;NO_TRACING;NO_COM</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.0|AnyCPU'">
+    <DocumentationFile />
+    <TreatSpecificWarningsAsErrors />
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.0' ">
@@ -84,6 +93,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Aggregate.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Aggregate.g.tt</DependentUpon>
+    </Compile>
     <Compile Update="Fold.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

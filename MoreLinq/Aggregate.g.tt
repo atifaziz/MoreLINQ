@@ -1,0 +1,100 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Globalization" #>
+<#@ import namespace="System.Linq" #>
+#region License and Terms
+// MoreLINQ - Extensions to LINQ to Objects
+// Copyright (c) 2017 Atif Aziz. All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#endregion
+
+#if !NO_VALUE_TUPLES
+
+namespace MoreLinq
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    partial class MoreEnumerable
+    {
+<#
+    var ordinals = new[]
+    {
+        "zeroth",
+        "first", "second", "third", "fourth", "fifth", "sixth", "seventh",
+        "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+        "fourteenth", "fifteenth", "sixteenth"
+    };
+
+    foreach (var n in Enumerable.Range(2, 0/*16 - 2*/))
+    {
+        string T(string s, int x) => s + x.ToString(CultureInfo.InvariantCulture);
+        var ns = Enumerable.Range(1, n).ToArray();
+#>
+        /// <summary>
+        /// Applies <#= T(null, n) #> accumulator functions over a sequence.
+        /// </summary>
+        /// <typeparam name="TSource">
+        /// The type of the elements of <paramref name="source"/>.</typeparam>
+<#      foreach (var m in ns)
+        { #>
+        /// <typeparam name="<#= T("TState", m) #>">The type of the <#= ordinals[m] #> accumulator value.</typeparam>
+<#      } #>
+        /// <typeparam name="TResult">The type of the resulting value.</typeparam>
+        /// <param name="source">The sequence to aggregate over.</param>
+<#      foreach (var m in ns)
+        { #>
+        /// <param name="<#= T("seed", m) #>">The <#= ordinals[m] #> initial accumulator value.</param>
+        /// <param name="<#= T("accumulator", m) #>">The <#= ordinals[m] #> accumulator function to be invoked on each element.</param>
+<#      } #>
+        /// <param name="resultSelector">
+        /// A function to transform the final accumulator value into the result value.</param>
+        /// <returns>The transformed final accumulator value.</returns>
+        /// <remarks>This method uses immediate execution semantics.</remarks>
+
+        public static TResult Aggregate<TSource, <#= string.Join(", ", from m in ns select T("TState", m)) #>, TResult>(
+            this IEnumerable<TSource> source,
+<#      foreach (var m in ns)
+        { #>
+            <#= T("TState", m) #> <#= T("seed", m) #>, Func<<#= T("TState", m) #>, TSource, <#= T("TState", m) #>> <#= T("accumulator", m) #>,
+<#      } #>
+            Func<<#= string.Join(", ", from m in ns select T("TState", m)) #>, TResult> resultSelector)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+<#      foreach (var m in ns)
+        { #>
+            if (<#= T("accumulator", m) #> == null) throw new ArgumentNullException(nameof(<#= T("accumulator", m) #>));
+<#      } #>
+            if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
+
+            return
+                source.Aggregate(
+                    (<#= string.Join(", ", from m in ns select T("seed", m)) #>),
+                    (s, e) => (<#
+        foreach (var m in ns)
+        { #><#= T("accumulator", m) #>(s.<#= T("Item", m) #>, e)<# if (m == n) {#>)<# } #>,<# if (m < n) {#>
+
+                               <# }
+        } #>
+
+                    s => resultSelector(<#= string.Join(", ", from m in ns select T("s.Item", m)) #>));
+        }
+
+<#  } #>
+    }
+}
+
+#endif // !NO_VALUE_TUPLES
