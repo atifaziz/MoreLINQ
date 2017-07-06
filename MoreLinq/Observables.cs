@@ -33,6 +33,9 @@ namespace MoreLinq
 
         public static IObservable<T> Where<T>(this IObservable<T> source, Func<T, bool> predicate) =>
             Create<T>(observer => source.Subscribe(Observer.Create((T item) => { if (predicate(item)) observer.OnNext(item); })));
+
+        public static IDisposable Subscribe<T>(this IObservable<T> source, Action<T> onNext, Action<Exception> onError = null, Action onCompleted = null) =>
+            source.Subscribe(Observer.Create(onNext, onError, onCompleted));
     }
 
     sealed class Observer
