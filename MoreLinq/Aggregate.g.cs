@@ -53,35 +53,35 @@ namespace MoreLinq
             if (aggregatorSelector2 == null) throw new ArgumentNullException(nameof(aggregatorSelector2));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]));
         }
 
         /// <summary>
@@ -118,37 +118,37 @@ namespace MoreLinq
             if (aggregatorSelector3 == null) throw new ArgumentNullException(nameof(aggregatorSelector3));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]));
         }
 
         /// <summary>
@@ -190,39 +190,39 @@ namespace MoreLinq
             if (aggregatorSelector4 == null) throw new ArgumentNullException(nameof(aggregatorSelector4));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]));
         }
 
         /// <summary>
@@ -269,41 +269,41 @@ namespace MoreLinq
             if (aggregatorSelector5 == null) throw new ArgumentNullException(nameof(aggregatorSelector5));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]));
         }
 
         /// <summary>
@@ -355,43 +355,43 @@ namespace MoreLinq
             if (aggregatorSelector6 == null) throw new ArgumentNullException(nameof(aggregatorSelector6));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]));
         }
 
         /// <summary>
@@ -448,45 +448,45 @@ namespace MoreLinq
             if (aggregatorSelector7 == null) throw new ArgumentNullException(nameof(aggregatorSelector7));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]));
         }
 
         /// <summary>
@@ -548,47 +548,47 @@ namespace MoreLinq
             if (aggregatorSelector8 == null) throw new ArgumentNullException(nameof(aggregatorSelector8));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]));
         }
 
         /// <summary>
@@ -655,49 +655,49 @@ namespace MoreLinq
             if (aggregatorSelector9 == null) throw new ArgumentNullException(nameof(aggregatorSelector9));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]));
         }
 
         /// <summary>
@@ -769,51 +769,51 @@ namespace MoreLinq
             if (aggregatorSelector10 == null) throw new ArgumentNullException(nameof(aggregatorSelector10));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]));
         }
 
         /// <summary>
@@ -890,53 +890,53 @@ namespace MoreLinq
             if (aggregatorSelector11 == null) throw new ArgumentNullException(nameof(aggregatorSelector11));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-            var r11 = (Defined: false, Value: default(TResult11));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
+            var r11 = new (bool, TResult11)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
-            using (Subscribe(aggregatorSelector11(subject), r => r11 = Set(11, r11, r), nameof(aggregatorSelector11)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
+            using (Subscribe(11, aggregatorSelector11(subject), r11, nameof(aggregatorSelector11)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10), Get(11, r11));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]));
         }
 
         /// <summary>
@@ -1018,55 +1018,55 @@ namespace MoreLinq
             if (aggregatorSelector12 == null) throw new ArgumentNullException(nameof(aggregatorSelector12));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-            var r11 = (Defined: false, Value: default(TResult11));
-            var r12 = (Defined: false, Value: default(TResult12));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
+            var r11 = new (bool, TResult11)[1];
+            var r12 = new (bool, TResult12)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
-            using (Subscribe(aggregatorSelector11(subject), r => r11 = Set(11, r11, r), nameof(aggregatorSelector11)))
-            using (Subscribe(aggregatorSelector12(subject), r => r12 = Set(12, r12, r), nameof(aggregatorSelector12)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
+            using (Subscribe(11, aggregatorSelector11(subject), r11, nameof(aggregatorSelector11)))
+            using (Subscribe(12, aggregatorSelector12(subject), r12, nameof(aggregatorSelector12)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10), Get(11, r11), Get(12, r12));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]));
         }
 
         /// <summary>
@@ -1153,57 +1153,57 @@ namespace MoreLinq
             if (aggregatorSelector13 == null) throw new ArgumentNullException(nameof(aggregatorSelector13));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-            var r11 = (Defined: false, Value: default(TResult11));
-            var r12 = (Defined: false, Value: default(TResult12));
-            var r13 = (Defined: false, Value: default(TResult13));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
+            var r11 = new (bool, TResult11)[1];
+            var r12 = new (bool, TResult12)[1];
+            var r13 = new (bool, TResult13)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
-            using (Subscribe(aggregatorSelector11(subject), r => r11 = Set(11, r11, r), nameof(aggregatorSelector11)))
-            using (Subscribe(aggregatorSelector12(subject), r => r12 = Set(12, r12, r), nameof(aggregatorSelector12)))
-            using (Subscribe(aggregatorSelector13(subject), r => r13 = Set(13, r13, r), nameof(aggregatorSelector13)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
+            using (Subscribe(11, aggregatorSelector11(subject), r11, nameof(aggregatorSelector11)))
+            using (Subscribe(12, aggregatorSelector12(subject), r12, nameof(aggregatorSelector12)))
+            using (Subscribe(13, aggregatorSelector13(subject), r13, nameof(aggregatorSelector13)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10), Get(11, r11), Get(12, r12), Get(13, r13));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]));
         }
 
         /// <summary>
@@ -1295,59 +1295,59 @@ namespace MoreLinq
             if (aggregatorSelector14 == null) throw new ArgumentNullException(nameof(aggregatorSelector14));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-            var r11 = (Defined: false, Value: default(TResult11));
-            var r12 = (Defined: false, Value: default(TResult12));
-            var r13 = (Defined: false, Value: default(TResult13));
-            var r14 = (Defined: false, Value: default(TResult14));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
+            var r11 = new (bool, TResult11)[1];
+            var r12 = new (bool, TResult12)[1];
+            var r13 = new (bool, TResult13)[1];
+            var r14 = new (bool, TResult14)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
-            using (Subscribe(aggregatorSelector11(subject), r => r11 = Set(11, r11, r), nameof(aggregatorSelector11)))
-            using (Subscribe(aggregatorSelector12(subject), r => r12 = Set(12, r12, r), nameof(aggregatorSelector12)))
-            using (Subscribe(aggregatorSelector13(subject), r => r13 = Set(13, r13, r), nameof(aggregatorSelector13)))
-            using (Subscribe(aggregatorSelector14(subject), r => r14 = Set(14, r14, r), nameof(aggregatorSelector14)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
+            using (Subscribe(11, aggregatorSelector11(subject), r11, nameof(aggregatorSelector11)))
+            using (Subscribe(12, aggregatorSelector12(subject), r12, nameof(aggregatorSelector12)))
+            using (Subscribe(13, aggregatorSelector13(subject), r13, nameof(aggregatorSelector13)))
+            using (Subscribe(14, aggregatorSelector14(subject), r14, nameof(aggregatorSelector14)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10), Get(11, r11), Get(12, r12), Get(13, r13), Get(14, r14));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]), Get(14, r14[0]));
         }
 
         /// <summary>
@@ -1444,61 +1444,61 @@ namespace MoreLinq
             if (aggregatorSelector15 == null) throw new ArgumentNullException(nameof(aggregatorSelector15));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = (Defined: false, Value: default(TResult1));
-            var r2 = (Defined: false, Value: default(TResult2));
-            var r3 = (Defined: false, Value: default(TResult3));
-            var r4 = (Defined: false, Value: default(TResult4));
-            var r5 = (Defined: false, Value: default(TResult5));
-            var r6 = (Defined: false, Value: default(TResult6));
-            var r7 = (Defined: false, Value: default(TResult7));
-            var r8 = (Defined: false, Value: default(TResult8));
-            var r9 = (Defined: false, Value: default(TResult9));
-            var r10 = (Defined: false, Value: default(TResult10));
-            var r11 = (Defined: false, Value: default(TResult11));
-            var r12 = (Defined: false, Value: default(TResult12));
-            var r13 = (Defined: false, Value: default(TResult13));
-            var r14 = (Defined: false, Value: default(TResult14));
-            var r15 = (Defined: false, Value: default(TResult15));
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
+            var r1 = new (bool, TResult1)[1];
+            var r2 = new (bool, TResult2)[1];
+            var r3 = new (bool, TResult3)[1];
+            var r4 = new (bool, TResult4)[1];
+            var r5 = new (bool, TResult5)[1];
+            var r6 = new (bool, TResult6)[1];
+            var r7 = new (bool, TResult7)[1];
+            var r8 = new (bool, TResult8)[1];
+            var r9 = new (bool, TResult9)[1];
+            var r10 = new (bool, TResult10)[1];
+            var r11 = new (bool, TResult11)[1];
+            var r12 = new (bool, TResult12)[1];
+            var r13 = new (bool, TResult13)[1];
+            var r14 = new (bool, TResult14)[1];
+            var r15 = new (bool, TResult15)[1];
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
-            using (Subscribe(aggregatorSelector1(subject), r => r1 = Set(1, r1, r), nameof(aggregatorSelector1)))
-            using (Subscribe(aggregatorSelector2(subject), r => r2 = Set(2, r2, r), nameof(aggregatorSelector2)))
-            using (Subscribe(aggregatorSelector3(subject), r => r3 = Set(3, r3, r), nameof(aggregatorSelector3)))
-            using (Subscribe(aggregatorSelector4(subject), r => r4 = Set(4, r4, r), nameof(aggregatorSelector4)))
-            using (Subscribe(aggregatorSelector5(subject), r => r5 = Set(5, r5, r), nameof(aggregatorSelector5)))
-            using (Subscribe(aggregatorSelector6(subject), r => r6 = Set(6, r6, r), nameof(aggregatorSelector6)))
-            using (Subscribe(aggregatorSelector7(subject), r => r7 = Set(7, r7, r), nameof(aggregatorSelector7)))
-            using (Subscribe(aggregatorSelector8(subject), r => r8 = Set(8, r8, r), nameof(aggregatorSelector8)))
-            using (Subscribe(aggregatorSelector9(subject), r => r9 = Set(9, r9, r), nameof(aggregatorSelector9)))
-            using (Subscribe(aggregatorSelector10(subject), r => r10 = Set(10, r10, r), nameof(aggregatorSelector10)))
-            using (Subscribe(aggregatorSelector11(subject), r => r11 = Set(11, r11, r), nameof(aggregatorSelector11)))
-            using (Subscribe(aggregatorSelector12(subject), r => r12 = Set(12, r12, r), nameof(aggregatorSelector12)))
-            using (Subscribe(aggregatorSelector13(subject), r => r13 = Set(13, r13, r), nameof(aggregatorSelector13)))
-            using (Subscribe(aggregatorSelector14(subject), r => r14 = Set(14, r14, r), nameof(aggregatorSelector14)))
-            using (Subscribe(aggregatorSelector15(subject), r => r15 = Set(15, r15, r), nameof(aggregatorSelector15)))
+            using (Subscribe(1, aggregatorSelector1(subject), r1, nameof(aggregatorSelector1)))
+            using (Subscribe(2, aggregatorSelector2(subject), r2, nameof(aggregatorSelector2)))
+            using (Subscribe(3, aggregatorSelector3(subject), r3, nameof(aggregatorSelector3)))
+            using (Subscribe(4, aggregatorSelector4(subject), r4, nameof(aggregatorSelector4)))
+            using (Subscribe(5, aggregatorSelector5(subject), r5, nameof(aggregatorSelector5)))
+            using (Subscribe(6, aggregatorSelector6(subject), r6, nameof(aggregatorSelector6)))
+            using (Subscribe(7, aggregatorSelector7(subject), r7, nameof(aggregatorSelector7)))
+            using (Subscribe(8, aggregatorSelector8(subject), r8, nameof(aggregatorSelector8)))
+            using (Subscribe(9, aggregatorSelector9(subject), r9, nameof(aggregatorSelector9)))
+            using (Subscribe(10, aggregatorSelector10(subject), r10, nameof(aggregatorSelector10)))
+            using (Subscribe(11, aggregatorSelector11(subject), r11, nameof(aggregatorSelector11)))
+            using (Subscribe(12, aggregatorSelector12(subject), r12, nameof(aggregatorSelector12)))
+            using (Subscribe(13, aggregatorSelector13(subject), r13, nameof(aggregatorSelector13)))
+            using (Subscribe(14, aggregatorSelector14(subject), r14, nameof(aggregatorSelector14)))
+            using (Subscribe(15, aggregatorSelector15(subject), r15, nameof(aggregatorSelector15)))
             {
                 foreach (var item in source)
                     subject.OnNext(item);
                 subject.OnCompleted();
             }
 
-            return resultSelector(Get(1, r1), Get(2, r2), Get(3, r3), Get(4, r4), Get(5, r5), Get(6, r6), Get(7, r7), Get(8, r8), Get(9, r9), Get(10, r10), Get(11, r11), Get(12, r12), Get(13, r13), Get(14, r14), Get(15, r15));
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]), Get(14, r14[0]), Get(15, r15[0]));
         }
 
     }

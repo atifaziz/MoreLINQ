@@ -81,29 +81,24 @@ namespace MoreLinq
 
 <#      foreach (var m in ns)
         { #>
-            var <#= T("r", m) #> = (Defined: false, Value: default(<#= T("TResult", m) #>));
+            var <#= T("r", m) #> = new (bool, <#= T("TResult", m) #>)[1];
 <#      } #>
-
-            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
-                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
-                                : (true, result);
-
-            T Get<T>(int pos, (bool Defined, T Value) result) =>
-                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
-                                : result.Value;
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
-                : aggregator.Subscribe(Observer.Create(onNext));
+                : aggregator.Subscribe(s =>
+                      r[0] = r[0].Defined
+                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
+                           : (true, s));
 
             // TODO OnError
 
 <#      foreach (var m in ns)
         { #>
-            using (Subscribe(<#= T("aggregatorSelector", m) #>(subject), r => <#= T("r", m) #> = Set(<#= T(null, m) #>, <#= T("r", m) #>, r), nameof(<#= T("aggregatorSelector", m) #>)))
+            using (Subscribe(<#= T(null, m) #>, <#= T("aggregatorSelector", m) #>(subject), <#= T("r", m) #>, nameof(<#= T("aggregatorSelector", m) #>)))
 <#      } #>
             {
                 foreach (var item in source)
@@ -111,7 +106,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            return resultSelector(<#= string.Join(", ", from m in ns select $"Get({T(null, m)}, {T("r", m)})") #>);
+            T Get<T>(int n, (bool Defined, T Value) result) =>
+                !result.Defined
+                ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
+                : result.Value;
+
+            return resultSelector(<#= string.Join(", ", from m in ns select $"Get({T(null, m)}, {T("r", m)}[0])") #>);
         }
 
 <#  } #>
