@@ -81,31 +81,37 @@ namespace MoreLinq
 
 <#      foreach (var m in ns)
         { #>
-            var <#= T("r", m) #> = new <#= T("TResult", m) #>[1]; var <#= T("s", m) #> = new Subject<TSource>();
+            var <#= T("r", m) #> = (Defined: false, Value: default(<#= T("TResult", m) #>));
 <#      } #>
+
+            (bool, T) Set<T>(int pos, (bool Defined, T) current, T result) =>
+                current.Defined ? throw new InvalidOperationException($"Aggregator #{pos} produced multiple results when only one is allowed.")
+                                : (true, result);
+
+            T Get<T>(int pos, (bool Defined, T Value) result) =>
+                result.Defined  ? throw new InvalidOperationException($"Aggregator #{pos} has an undefined result.")
+                                : result.Value;
+
+            var subject = new Subject<TSource>();
+
+            IDisposable Subscribe<T>(IObservable<T> aggregator, Action<T> onNext, string paramName) =>
+                ReferenceEquals(aggregator, subject)
+                ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
+                : aggregator.Subscribe(Observer.Create(onNext));
 
             // TODO OnError
 
 <#      foreach (var m in ns)
         { #>
-            using (<#= T("aggregatorSelector", m) #>(<#= T("s", m) #>).Subscribe(Observer.Create((<#= T("TResult", m) #> r) => <#= T("r", m) #>[0] = r)))
+            using (Subscribe(<#= T("aggregatorSelector", m) #>(subject), r => <#= T("r", m) #> = Set(<#= T(null, m) #>, <#= T("r", m) #>, r), nameof(<#= T("aggregatorSelector", m) #>)))
 <#      } #>
             {
                 foreach (var item in source)
-                {
-<#      foreach (var m in ns)
-        { #>
-                    <#= T("s", m) #>.OnNext(item);
-<#      } #>
-                }
-
-<#      foreach (var m in ns)
-        { #>
-                <#= T("s", m) #>.OnCompleted();
-<#      } #>
+                    subject.OnNext(item);
+                subject.OnCompleted();
             }
 
-            return resultSelector(<#= string.Join(", ", from m in ns select T("r", m) + "[0]") #>);
+            return resultSelector(<#= string.Join(", ", from m in ns select $"Get({T(null, m)}, {T("r", m)})") #>);
         }
 
 <#  } #>
