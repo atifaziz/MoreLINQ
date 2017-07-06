@@ -21,6 +21,7 @@ namespace MoreLinq
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     partial class MoreEnumerable
     {
@@ -53,18 +54,20 @@ namespace MoreLinq
             if (aggregatorSelector2 == null) throw new ArgumentNullException(nameof(aggregatorSelector2));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -76,12 +79,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task));
         }
 
         /// <summary>
@@ -118,19 +121,21 @@ namespace MoreLinq
             if (aggregatorSelector3 == null) throw new ArgumentNullException(nameof(aggregatorSelector3));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -143,12 +148,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task));
         }
 
         /// <summary>
@@ -190,20 +195,22 @@ namespace MoreLinq
             if (aggregatorSelector4 == null) throw new ArgumentNullException(nameof(aggregatorSelector4));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -217,12 +224,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task));
         }
 
         /// <summary>
@@ -269,21 +276,23 @@ namespace MoreLinq
             if (aggregatorSelector5 == null) throw new ArgumentNullException(nameof(aggregatorSelector5));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -298,12 +307,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task));
         }
 
         /// <summary>
@@ -355,22 +364,24 @@ namespace MoreLinq
             if (aggregatorSelector6 == null) throw new ArgumentNullException(nameof(aggregatorSelector6));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -386,12 +397,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task));
         }
 
         /// <summary>
@@ -448,23 +459,25 @@ namespace MoreLinq
             if (aggregatorSelector7 == null) throw new ArgumentNullException(nameof(aggregatorSelector7));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -481,12 +494,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task));
         }
 
         /// <summary>
@@ -548,24 +561,26 @@ namespace MoreLinq
             if (aggregatorSelector8 == null) throw new ArgumentNullException(nameof(aggregatorSelector8));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -583,12 +598,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task));
         }
 
         /// <summary>
@@ -655,25 +670,27 @@ namespace MoreLinq
             if (aggregatorSelector9 == null) throw new ArgumentNullException(nameof(aggregatorSelector9));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -692,12 +709,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task));
         }
 
         /// <summary>
@@ -769,26 +786,28 @@ namespace MoreLinq
             if (aggregatorSelector10 == null) throw new ArgumentNullException(nameof(aggregatorSelector10));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -808,12 +827,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task));
         }
 
         /// <summary>
@@ -890,27 +909,29 @@ namespace MoreLinq
             if (aggregatorSelector11 == null) throw new ArgumentNullException(nameof(aggregatorSelector11));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
-            var r11 = new (bool, TResult11)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
+            var r11 = new TaskCompletionSource<TResult11>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -931,12 +952,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task), Get(11, r11.Task));
         }
 
         /// <summary>
@@ -1018,28 +1039,30 @@ namespace MoreLinq
             if (aggregatorSelector12 == null) throw new ArgumentNullException(nameof(aggregatorSelector12));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
-            var r11 = new (bool, TResult11)[1];
-            var r12 = new (bool, TResult12)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
+            var r11 = new TaskCompletionSource<TResult11>();
+            var r12 = new TaskCompletionSource<TResult12>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -1061,12 +1084,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task), Get(11, r11.Task), Get(12, r12.Task));
         }
 
         /// <summary>
@@ -1153,29 +1176,31 @@ namespace MoreLinq
             if (aggregatorSelector13 == null) throw new ArgumentNullException(nameof(aggregatorSelector13));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
-            var r11 = new (bool, TResult11)[1];
-            var r12 = new (bool, TResult12)[1];
-            var r13 = new (bool, TResult13)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
+            var r11 = new TaskCompletionSource<TResult11>();
+            var r12 = new TaskCompletionSource<TResult12>();
+            var r13 = new TaskCompletionSource<TResult13>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -1198,12 +1223,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task), Get(11, r11.Task), Get(12, r12.Task), Get(13, r13.Task));
         }
 
         /// <summary>
@@ -1295,30 +1320,32 @@ namespace MoreLinq
             if (aggregatorSelector14 == null) throw new ArgumentNullException(nameof(aggregatorSelector14));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
-            var r11 = new (bool, TResult11)[1];
-            var r12 = new (bool, TResult12)[1];
-            var r13 = new (bool, TResult13)[1];
-            var r14 = new (bool, TResult14)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
+            var r11 = new TaskCompletionSource<TResult11>();
+            var r12 = new TaskCompletionSource<TResult12>();
+            var r13 = new TaskCompletionSource<TResult13>();
+            var r14 = new TaskCompletionSource<TResult14>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -1342,12 +1369,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]), Get(14, r14[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task), Get(11, r11.Task), Get(12, r12.Task), Get(13, r13.Task), Get(14, r14.Task));
         }
 
         /// <summary>
@@ -1444,31 +1471,33 @@ namespace MoreLinq
             if (aggregatorSelector15 == null) throw new ArgumentNullException(nameof(aggregatorSelector15));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            var r1 = new (bool, TResult1)[1];
-            var r2 = new (bool, TResult2)[1];
-            var r3 = new (bool, TResult3)[1];
-            var r4 = new (bool, TResult4)[1];
-            var r5 = new (bool, TResult5)[1];
-            var r6 = new (bool, TResult6)[1];
-            var r7 = new (bool, TResult7)[1];
-            var r8 = new (bool, TResult8)[1];
-            var r9 = new (bool, TResult9)[1];
-            var r10 = new (bool, TResult10)[1];
-            var r11 = new (bool, TResult11)[1];
-            var r12 = new (bool, TResult12)[1];
-            var r13 = new (bool, TResult13)[1];
-            var r14 = new (bool, TResult14)[1];
-            var r15 = new (bool, TResult15)[1];
+            var r1 = new TaskCompletionSource<TResult1>();
+            var r2 = new TaskCompletionSource<TResult2>();
+            var r3 = new TaskCompletionSource<TResult3>();
+            var r4 = new TaskCompletionSource<TResult4>();
+            var r5 = new TaskCompletionSource<TResult5>();
+            var r6 = new TaskCompletionSource<TResult6>();
+            var r7 = new TaskCompletionSource<TResult7>();
+            var r8 = new TaskCompletionSource<TResult8>();
+            var r9 = new TaskCompletionSource<TResult9>();
+            var r10 = new TaskCompletionSource<TResult10>();
+            var r11 = new TaskCompletionSource<TResult11>();
+            var r12 = new TaskCompletionSource<TResult12>();
+            var r13 = new TaskCompletionSource<TResult13>();
+            var r14 = new TaskCompletionSource<TResult14>();
+            var r15 = new TaskCompletionSource<TResult15>();
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -1493,12 +1522,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(Get(1, r1[0]), Get(2, r2[0]), Get(3, r3[0]), Get(4, r4[0]), Get(5, r5[0]), Get(6, r6[0]), Get(7, r7[0]), Get(8, r8[0]), Get(9, r9[0]), Get(10, r10[0]), Get(11, r11[0]), Get(12, r12[0]), Get(13, r13[0]), Get(14, r14[0]), Get(15, r15[0]));
+            return resultSelector(Get(1, r1.Task), Get(2, r2.Task), Get(3, r3.Task), Get(4, r4.Task), Get(5, r5.Task), Get(6, r6.Task), Get(7, r7.Task), Get(8, r8.Task), Get(9, r9.Task), Get(10, r10.Task), Get(11, r11.Task), Get(12, r12.Task), Get(13, r13.Task), Get(14, r14.Task), Get(15, r15.Task));
         }
 
     }

@@ -26,6 +26,7 @@ namespace MoreLinq
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     partial class MoreEnumerable
     {
@@ -81,18 +82,20 @@ namespace MoreLinq
 
 <#      foreach (var m in ns)
         { #>
-            var <#= T("r", m) #> = new (bool, <#= T("TResult", m) #>)[1];
+            var <#= T("r", m) #> = new TaskCompletionSource<<#= T("TResult", m) #>>();
 <#      } #>
 
             var subject = new Subject<TSource>();
 
-            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, (bool Defined, T)[] r, string paramName) =>
+            IDisposable Subscribe<T>(int n, IObservable<T> aggregator, TaskCompletionSource<T> r, string paramName) =>
                 ReferenceEquals(aggregator, subject)
                 ? throw new ArgumentException($"Aggregator cannot be identical to the source.", paramName)
                 : aggregator.Subscribe(s =>
-                      r[0] = r[0].Defined
-                           ? throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.")
-                           : (true, s));
+                  {
+                      if (r.Task.IsCompleted)
+                          throw new InvalidOperationException($"Aggregator #{n} produced multiple results when only one is allowed.");
+                      r.SetResult(s);
+                  });
 
             // TODO OnError
 
@@ -106,12 +109,12 @@ namespace MoreLinq
                 subject.OnCompleted();
             }
 
-            T Get<T>(int n, (bool Defined, T Value) result) =>
-                !result.Defined
+            T Get<T>(int n, Task<T> result) =>
+                !result.IsCompleted
                 ? throw new InvalidOperationException($"Aggregator #{n} has an undefined result.")
-                : result.Value;
+                : result.Result;
 
-            return resultSelector(<#= string.Join(", ", from m in ns select $"Get({T(null, m)}, {T("r", m)}[0])") #>);
+            return resultSelector(<#= string.Join(", ", from m in ns select $"Get({T(null, m)}, {T("r", m)}.Task)") #>);
         }
 
 <#  } #>
