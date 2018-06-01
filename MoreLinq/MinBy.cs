@@ -70,7 +70,7 @@ namespace MoreLinq
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
             comparer = comparer ?? Comparer<TKey>.Default;
-            return ExtremaBy(source, selector, (x, y) => -Math.Sign(comparer.Compare(x, y)));
+            return ExtremaBy(source, Extremity.First, null, selector, (x, y) => -Math.Sign(comparer.Compare(x, y)));
         }
     }
 }

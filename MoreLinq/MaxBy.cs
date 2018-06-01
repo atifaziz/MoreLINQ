@@ -18,6 +18,7 @@
 namespace MoreLinq
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
 
     static partial class MoreEnumerable
@@ -70,7 +71,7 @@ namespace MoreLinq
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
             comparer = comparer ?? Comparer<TKey>.Default;
-            return ExtremaBy(source, selector, (x, y) => comparer.Compare(x, y));
+            return ExtremaBy(source, Extremity.First, null, selector, (x, y) => comparer.Compare(x, y));
         }
 
         // > In mathematical analysis, the maxima and minima (the respective
@@ -80,6 +81,7 @@ namespace MoreLinq
         // > - https://en.wikipedia.org/wiki/Maxima_and_minima
 
         static IEnumerable<TSource> ExtremaBy<TSource, TKey>(IEnumerable<TSource> source,
+            Extremity extremity, int? limit,
             Func<TSource, TKey> selector, Func<TKey, TKey, int> comparer)
         {
             foreach (var item in Extrema())
@@ -92,7 +94,8 @@ namespace MoreLinq
                     if (!e.MoveNext())
                         return new List<TSource>();
 
-                    var extrema = new List<TSource> { e.Current };
+                    var extrema = Extrema<TSource>.Create(extremity, limit);
+                    extrema.Add(e.Current);
                     var extremaKey = selector(e.Current);
 
                     while (e.MoveNext())
@@ -102,7 +105,8 @@ namespace MoreLinq
                         var comparison = comparer(key, extremaKey);
                         if (comparison > 0)
                         {
-                            extrema = new List<TSource> { item };
+                            extrema.Reset();
+                            extrema.Add(item);
                             extremaKey = key;
                         }
                         else if (comparison == 0)
@@ -113,6 +117,57 @@ namespace MoreLinq
 
                     return extrema;
                 }
+            }
+        }
+
+        abstract class Extrema<T> : IEnumerable<T>
+        {
+            public static Extrema<T> Create(Extremity extremity, int? limit)
+                => extremity == Extremity.First ? new First(limit)
+                 : extremity == Extremity.Last  ? (Extrema<T>) new Last(limit)
+                 : throw new ArgumentOutOfRangeException(nameof(extremity));
+
+            protected Extrema(int? limit) => Limit = limit;
+
+            public int? Limit { get; }
+            public abstract int Count { get; }
+            public abstract void Push(T item);
+            public abstract bool Pop();
+            public abstract void Reset();
+
+            public void Add(T item)
+            {
+                if (Limit == null || Count < Limit || Pop())
+                    Push(item);
+            }
+
+            public abstract IEnumerator<T> GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            sealed class First : Extrema<T>
+            {
+                List<T> _list;
+
+                public First(int? limit) : base(limit) {}
+                List<T> List => _list ?? (_list = new List<T>());
+                public override int Count => _list?.Count ?? 0;
+                public override void Push(T item) => List.Add(item);
+                public override bool Pop() => false;
+                public override void Reset() => _list = null;
+                public override IEnumerator<T> GetEnumerator() => List.GetEnumerator();
+            }
+
+            sealed class Last : Extrema<T>
+            {
+                Queue<T> _queue;
+
+                public Last(int? limit) : base(limit) {}
+                Queue<T> Queue => _queue ?? (_queue = new Queue<T>());
+                public override int Count => _queue?.Count ?? 0;
+                public override void Push(T item) => Queue.Enqueue(item);
+                public override bool Pop() { Queue.Dequeue(); return true; }
+                public override void Reset() => _queue = null;
+                public override IEnumerator<T> GetEnumerator() => Queue.GetEnumerator();
             }
         }
     }
