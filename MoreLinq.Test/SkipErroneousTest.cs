@@ -20,26 +20,33 @@ namespace MoreLinq.Test
     using Experimental;
     using NUnit.Framework;
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
 
     [TestFixture]
     public class SkipErroneousTest
     {
+        static readonly IEnumerable<IEnumerable<int>>
+            BreakingSequence = new BreakingSequence<IEnumerable<int>>();
+
         [Test]
         public void SkipErroneousError1IsLazy()
         {
-            new BreakingSequence<int>().SkipErroneous<int, TestException>();
+            BreakingSequence.SkipErroneous<int, TestException>();
         }
 
         [Test]
         public void SkipErroneousError1()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => throw new TestException(),
-                                             () => 2,
-                                             () => throw new NullReferenceException(),
-                                             () => 3);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 3),
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -54,21 +61,24 @@ namespace MoreLinq.Test
        [Test]
         public void SkipErroneousError1WithBaseException()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => 2,
-                                             () => throw new NullReferenceException(),
-                                             () => 3,
-                                             () => throw new ArgumentException(),
-                                             () => 4,
-                                             () => throw new TestException(),
-                                             () => 5,
-                                             () => throw new NullReferenceException(),
-                                             () => 6,
-                                             () => throw new ArgumentException(),
-                                             () => 7,
-                                             () => throw new Exception(),
-                                             () => 8);
+            var source =new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 3),
+                MoreEnumerable.From<int>(() => throw new ArgumentException()),
+                MoreEnumerable.From(() => 4),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 5),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 6),
+                MoreEnumerable.From<int>(() => throw new ArgumentException()),
+                MoreEnumerable.From(() => 7),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 8)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -82,7 +92,7 @@ namespace MoreLinq.Test
         public void SkipErroneousError1InParsing()
         {
             var source = "O,l,2,3,4,S,6,7,B,9".Split(',')
-                                              .Select(x => int.Parse(x, CultureInfo.InvariantCulture));
+                                              .Select(x => MoreEnumerable.From(() => int.Parse(x, CultureInfo.InvariantCulture)));
 
             using (var test = source.AsTestingSequence())
             {
@@ -95,21 +105,24 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError2IsLazy()
         {
-            new BreakingSequence<int>().SkipErroneous<int, TestException, NullReferenceException>();
+            BreakingSequence.SkipErroneous<int, TestException, NullReferenceException>();
         }
 
         [Test]
         public void SkipErroneousError2()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => 2,
-                                             () => throw new NullReferenceException(),
-                                             () => 3,
-                                             () => throw new NullReferenceException(),
-                                             () => 4,
-                                             () => throw new Exception(),
-                                             () => 5);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 3),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 4),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 5)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -124,27 +137,30 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError3IsLazy()
         {
-            new BreakingSequence<int>().SkipErroneous<int, TestException, NullReferenceException, ArgumentException>();
+            BreakingSequence.SkipErroneous<int, TestException, NullReferenceException, ArgumentException>();
         }
 
         [Test]
         public void SkipErroneousError3()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => 2,
-                                             () => throw new NullReferenceException(),
-                                             () => 3,
-                                             () => throw new ArgumentException(),
-                                             () => 4,
-                                             () => throw new TestException(),
-                                             () => 5,
-                                             () => throw new NullReferenceException(),
-                                             () => 6,
-                                             () => throw new ArgumentException(),
-                                             () => 7,
-                                             () => throw new Exception(),
-                                             () => 8);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 3),
+                MoreEnumerable.From<int>(() => throw new ArgumentException()),
+                MoreEnumerable.From(() => 4),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 5),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 6),
+                MoreEnumerable.From<int>(() => throw new ArgumentException()),
+                MoreEnumerable.From(() => 7),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 8)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -159,18 +175,21 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError1PredicateIsLazy()
         {
-            new BreakingSequence<int>().SkipErroneous(BreakingFunc.Of<Exception, bool>());
+            BreakingSequence.SkipErroneous(BreakingFunc.Of<Exception, bool>());
         }
 
         [Test]
         public void SkipErroneousError1Predicate()
         {
             const string key = "ignore";
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException() { Data = { [key] = true } },
-                                             () => 2,
-                                             () => throw new TestException() { Data = { [key] = false } },
-                                             () => 3);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException { Data = { [key] = true } }),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new TestException { Data = { [key] = false } }),
+                MoreEnumerable.From(() => 3)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -185,10 +204,13 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError1PredicateNoTypeMatch()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => 2,
-                                             () => throw new TestException(),
-                                             () => 3);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 3)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -203,16 +225,19 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError1PredicateWithBaseException()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => throw new Exception(),
-                                             () => 2,
-                                             () => throw new ArgumentException(),
-                                             () => 3,
-                                             () => throw new NullReferenceException(),
-                                             () => 4,
-                                             () => throw new Exception(),
-                                             () => 5);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new ArgumentException()),
+                MoreEnumerable.From(() => 3),
+                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
+                MoreEnumerable.From(() => 4),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 5)
+            };
 
             using (var test = source.AsTestingSequence())
             {
@@ -227,11 +252,15 @@ namespace MoreLinq.Test
         [Test]
         public void SkipErroneousError2PredicateIsCaughtInOrder()
         {
-            var source = MoreEnumerable.From(() => 1,
-                                             () => throw new TestException(),
-                                             () => 2,
-                                             () => throw new Exception(),
-                                             () => 3);
+            var source = new[]
+            {
+                MoreEnumerable.From(() => 1),
+                MoreEnumerable.From<int>(() => throw new TestException()),
+                MoreEnumerable.From(() => 2),
+                MoreEnumerable.From<int>(() => throw new Exception()),
+                MoreEnumerable.From(() => 3)
+            };
+
             var testCount = 0;
             var exceptionCount = 0;
 

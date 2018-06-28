@@ -45,7 +45,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException>(
-            this IEnumerable<T> source)
+            this IEnumerable<IEnumerable<T>> source)
             where TException : Exception
             => SkipErroneousImpl<T, TException, TException, TException>(source, null, null, null);
 
@@ -80,7 +80,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException1, TException2>(
-            this IEnumerable<T> source)
+            this IEnumerable<IEnumerable<T>> source)
             where TException1 : Exception
             where TException2 : Exception
             => SkipErroneousImpl<T, TException1, TException2, TException2>(source, null, null, null);
@@ -119,7 +119,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException1, TException2, TException3>(
-            this IEnumerable<T> source)
+            this IEnumerable<IEnumerable<T>> source)
             where TException1 : Exception
             where TException2 : Exception
             where TException3 : Exception
@@ -152,7 +152,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException>(
-            this IEnumerable<T> source,
+            this IEnumerable<IEnumerable<T>> source,
             Func<TException, bool> errorPredicate)
             where TException : Exception
         {
@@ -200,7 +200,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException1, TException2>(
-            this IEnumerable<T> source,
+            this IEnumerable<IEnumerable<T>> source,
             Func<TException1, bool> error1Predicate,
             Func<TException2, bool> error2Predicate)
             where TException1 : Exception
@@ -258,7 +258,7 @@ namespace MoreLinq
         /// </remarks>
 
         public static IEnumerable<T> SkipErroneous<T, TException1, TException2, TException3>(
-            this IEnumerable<T> source,
+            this IEnumerable<IEnumerable<T>> source,
             Func<TException1, bool> error1Predicate,
             Func<TException2, bool> error2Predicate,
             Func<TException3, bool> error3Predicate)
@@ -274,7 +274,7 @@ namespace MoreLinq
         }
 
         static IEnumerable<T> SkipErroneousImpl<T, TException1, TException2, TException3>(
-            this IEnumerable<T> source,
+            this IEnumerable<IEnumerable<T>> source,
             Func<TException1, bool> error1Predicate,
             Func<TException2, bool> error2Predicate,
             Func<TException3, bool> error3Predicate)
@@ -286,31 +286,32 @@ namespace MoreLinq
 
             return _(); IEnumerable<T> _()
             {
-                using (var e = source.GetEnumerator())
+                foreach (var s in source)
                 {
-                    while (true)
+                    using (var e = s.GetEnumerator())
                     {
-                        try
+                        while (true)
                         {
-                            if (!e.MoveNext())
+                            try
+                            {
+                                if (!e.MoveNext())
+                                    break;
+                            }
+                            catch (TException1 ex) when (error1Predicate?.Invoke(ex) ?? true)
                             {
                                 break;
                             }
-                        }
-                        catch (TException1 ex) when (error1Predicate?.Invoke(ex) ?? true)
-                        {
-                            continue;
-                        }
-                        catch (TException2 ex) when (error2Predicate?.Invoke(ex) ?? true)
-                        {
-                            continue;
-                        }
-                        catch (TException3 ex) when (error3Predicate?.Invoke(ex) ?? true)
-                        {
-                            continue;
-                        }
+                            catch (TException2 ex) when (error2Predicate?.Invoke(ex) ?? true)
+                            {
+                                break;
+                            }
+                            catch (TException3 ex) when (error3Predicate?.Invoke(ex) ?? true)
+                            {
+                                break;
+                            }
 
-                        yield return e.Current;
+                            yield return e.Current;
+                        }
                     }
                 }
             }
