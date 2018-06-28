@@ -26,8 +26,10 @@ namespace MoreLinq.Test
     [TestFixture]
     public class SkipErroneousTest
     {
-        static readonly IEnumerable<IEnumerable<int>>
-            BreakingSequence = new BreakingSequence<IEnumerable<int>>();
+        static readonly IEnumerable<Lazy<int>>
+            BreakingSequence = new BreakingSequence<Lazy<int>>();
+
+        static Lazy<T> Lazy<T>(Func<T> factory) => new Lazy<T>(factory);
 
         [Test]
         public void SkipErroneousError1IsLazy()
@@ -40,12 +42,12 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 3),
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 3),
             };
 
             using (var test = source.AsTestingSequence())
@@ -63,21 +65,21 @@ namespace MoreLinq.Test
         {
             var source =new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 3),
-                MoreEnumerable.From<int>(() => throw new ArgumentException()),
-                MoreEnumerable.From(() => 4),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 5),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 6),
-                MoreEnumerable.From<int>(() => throw new ArgumentException()),
-                MoreEnumerable.From(() => 7),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 8)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 3),
+                Lazy<int>(() => throw new ArgumentException()),
+                Lazy(() => 4),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 5),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 6),
+                Lazy<int>(() => throw new ArgumentException()),
+                Lazy(() => 7),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 8)
             };
 
             using (var test = source.AsTestingSequence())
@@ -92,7 +94,7 @@ namespace MoreLinq.Test
         public void SkipErroneousError1InParsing()
         {
             var source = "O,l,2,3,4,S,6,7,B,9".Split(',')
-                                              .Select(x => MoreEnumerable.From(() => int.Parse(x, CultureInfo.InvariantCulture)));
+                                              .Select(x => Lazy(() => int.Parse(x, CultureInfo.InvariantCulture)));
 
             using (var test = source.AsTestingSequence())
             {
@@ -113,15 +115,15 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 3),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 4),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 5)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 3),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 4),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 5)
             };
 
             using (var test = source.AsTestingSequence())
@@ -145,21 +147,21 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 3),
-                MoreEnumerable.From<int>(() => throw new ArgumentException()),
-                MoreEnumerable.From(() => 4),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 5),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 6),
-                MoreEnumerable.From<int>(() => throw new ArgumentException()),
-                MoreEnumerable.From(() => 7),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 8)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 3),
+                Lazy<int>(() => throw new ArgumentException()),
+                Lazy(() => 4),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 5),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 6),
+                Lazy<int>(() => throw new ArgumentException()),
+                Lazy(() => 7),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 8)
             };
 
             using (var test = source.AsTestingSequence())
@@ -184,11 +186,11 @@ namespace MoreLinq.Test
             const string key = "ignore";
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException { Data = { [key] = true } }),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new TestException { Data = { [key] = false } }),
-                MoreEnumerable.From(() => 3)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException { Data = { [key] = true } }),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new TestException { Data = { [key] = false } }),
+                Lazy(() => 3)
             };
 
             using (var test = source.AsTestingSequence())
@@ -206,10 +208,10 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 3)
+                Lazy(() => 1),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 3)
             };
 
             using (var test = source.AsTestingSequence())
@@ -227,16 +229,16 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new ArgumentException()),
-                MoreEnumerable.From(() => 3),
-                MoreEnumerable.From<int>(() => throw new NullReferenceException()),
-                MoreEnumerable.From(() => 4),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 5)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new ArgumentException()),
+                Lazy(() => 3),
+                Lazy<int>(() => throw new NullReferenceException()),
+                Lazy(() => 4),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 5)
             };
 
             using (var test = source.AsTestingSequence())
@@ -254,11 +256,11 @@ namespace MoreLinq.Test
         {
             var source = new[]
             {
-                MoreEnumerable.From(() => 1),
-                MoreEnumerable.From<int>(() => throw new TestException()),
-                MoreEnumerable.From(() => 2),
-                MoreEnumerable.From<int>(() => throw new Exception()),
-                MoreEnumerable.From(() => 3)
+                Lazy(() => 1),
+                Lazy<int>(() => throw new TestException()),
+                Lazy(() => 2),
+                Lazy<int>(() => throw new Exception()),
+                Lazy(() => 3)
             };
 
             var testCount = 0;
