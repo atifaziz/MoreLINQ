@@ -162,6 +162,10 @@ namespace MoreLinq.ExtensionsGenerator
                     TypeParameterCount = md.TypeParameterList?.Parameters.Count ?? 0,
                     TypeParameterAbbreviationByName = typeParameterAbbreviationByName,
                     ParameterCount = md.ParameterList.Parameters.Count,
+                    ExtendsAsyncEnumerableInterface =
+                        md.Identifier.ToString().EndsWith("Async", StringComparison.Ordinal)
+                        || md.ParameterList.Parameters.First().Type is GenericNameSyntax gns
+                           && (string)gns.Identifier.Value == "IAsyncEnumerable",
                     SortableParameterTypes =
                         from p in md.ParameterList.Parameters
                         select CreateTypeKey(p.Type,
@@ -233,6 +237,7 @@ namespace MoreLinq.ExtensionsGenerator
                 "System",
                 "System.CodeDom.Compiler",
                 "System.Collections.Generic",
+                "System.Threading.Tasks",
             };
 
             var imports =
@@ -240,37 +245,48 @@ namespace MoreLinq.ExtensionsGenerator
                 select indent + $"using {ns};";
 
             var classes =
-                from md in q
-                select md.Method.Syntax into md
-                group md by (string) md.Identifier.Value into g
+                from m in q
+                select m.Method into m
+                group new { m.ExtendsAsyncEnumerableInterface, m.Syntax }
+                      by (string) m.Syntax.Identifier.Value
+                into g
                 select new
                 {
                     Name = g.Key,
                     Overloads =
-                        from md in g
-                        select
-                            MethodDeclaration(md.ReturnType, md.Identifier)
-                                .WithAttributeLists(md.AttributeLists)
-                                .WithModifiers(md.Modifiers)
-                                .WithTypeParameterList(md.TypeParameterList)
-                                .WithConstraintClauses(md.ConstraintClauses)
-                                .WithParameterList(md.ParameterList)
-                                .WithExpressionBody(
-                                    ArrowExpressionClause(
-                                        InvocationExpression(
-                                            MemberAccessExpression(
-                                                SyntaxKind.SimpleMemberAccessExpression,
-                                                IdentifierName("MoreEnumerable"),
-                                                IdentifierName(md.Identifier)),
-                                            ArgumentList(
-                                                SeparatedList(
-                                                    from p in md.ParameterList.Parameters
-                                                    select Argument(IdentifierName(p.Identifier)),
-                                                    Enumerable.Repeat(ParseToken(",").WithTrailingTrivia(Space),
-                                                                      md.ParameterList.Parameters.Count - 1))))
-                                            .WithLeadingTrivia(Space))
-                                        .WithLeadingTrivia(Whitespace(indent3)))
-                                .WithSemicolonToken(ParseToken(";").WithTrailingTrivia(LineFeed))
+                        from m in g
+                        let md = m.Syntax
+                        select new
+                        {
+                            m.ExtendsAsyncEnumerableInterface,
+                            Syntax =
+                                MethodDeclaration(md.ReturnType, md.Identifier)
+                                    .WithAttributeLists(md.AttributeLists)
+                                    // Take all modifiers except async to avoid warning/error CS1998:
+                                    // "This async method lacks 'await' operators and will run synchronously."
+                                    .WithModifiers(TokenList(from m in md.Modifiers
+                                                             where !m.IsKind(SyntaxKind.AsyncKeyword)
+                                                             select m))
+                                    .WithTypeParameterList(md.TypeParameterList)
+                                    .WithConstraintClauses(md.ConstraintClauses)
+                                    .WithParameterList(md.ParameterList)
+                                    .WithExpressionBody(
+                                        ArrowExpressionClause(
+                                            InvocationExpression(
+                                                MemberAccessExpression(
+                                                    SyntaxKind.SimpleMemberAccessExpression,
+                                                    IdentifierName("MoreEnumerable"),
+                                                    IdentifierName(md.Identifier)),
+                                                ArgumentList(
+                                                    SeparatedList(
+                                                        from p in md.ParameterList.Parameters
+                                                        select Argument(IdentifierName(p.Identifier)),
+                                                        Enumerable.Repeat(ParseToken(",").WithTrailingTrivia(Space),
+                                                                            md.ParameterList.Parameters.Count - 1))))
+                                                .WithLeadingTrivia(Space))
+                                            .WithLeadingTrivia(Whitespace(indent3)))
+                                    .WithSemicolonToken(ParseToken(";").WithTrailingTrivia(LineFeed))
+                        }
                 }
                 into m
                 select (!noClassLead ? $@"
@@ -279,7 +295,10 @@ namespace MoreLinq.ExtensionsGenerator
     [GeneratedCode(""{thisAssemblyName.Name}"", ""{thisAssemblyName.Version}"")]" : null) + $@"
     public static partial class {m.Name}Extension
     {{
-{string.Join(null, from mo in m.Overloads select mo.ToFullString())}
+{string.Join(null, from mo in m.Overloads
+                   select (mo.ExtendsAsyncEnumerableInterface ? "#if !NO_ASYNC_STREAMS\n" : null)
+                        + mo.Syntax.ToFullString()
+                        + (mo.ExtendsAsyncEnumerableInterface ? "#endif // !NO_ASYNC_STREAMS\n" : null))}
     }}";
 
             var template = $@"
