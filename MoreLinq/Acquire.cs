@@ -58,3 +58,88 @@ namespace MoreLinq
         }
     }
 }
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    static partial class MoreEnumerable
+    {
+        /// <summary>
+        /// Ensures that a source sequence of <see cref="IAsyncDisposable"/>
+        /// objects are all acquired successfully. If the acquisition of any
+        /// one <see cref="IAsyncDisposable"/> fails then those successfully
+        /// acquired till that point are disposed.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <param name="source">Source sequence of <see cref="IAsyncDisposable"/> objects.</param>
+        /// <returns>
+        /// Returns an array of all the acquired <see cref="IAsyncDisposable"/>
+        /// objects in source order.
+        /// </returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static async Task<TSource[]> AcquireAsync<TSource>(this IEnumerable<TSource> source)
+            where TSource : IAsyncDisposable
+        {            
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var disposables = new List<TSource>();
+            try
+            {
+                disposables.AddRange(source);
+                return disposables.ToArray();
+            }
+            catch
+            {
+                foreach (var disposable in disposables)
+                    await disposable.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Ensures that a source sequence of <see cref="IAsyncDisposable"/>
+        /// objects are all acquired successfully. If the acquisition of any
+        /// one <see cref="IAsyncDisposable"/> fails then those successfully
+        /// acquired till that point are disposed.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <param name="source">Source sequence of <see cref="IAsyncDisposable"/> objects.</param>
+        /// <returns>
+        /// Returns an array of all the acquired <see cref="IAsyncDisposable"/>
+        /// objects in source order.
+        /// </returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static async Task<TSource[]> AcquireAsync<TSource>(this IAsyncEnumerable<TSource> source)
+            where TSource : IAsyncDisposable
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var disposables = new List<TSource>();
+            try
+            {
+                await foreach (var resource in source.ConfigureAwait(false))
+                    disposables.Add(resource);
+                return disposables.ToArray();
+            }
+            catch
+            {
+                foreach (var disposable in disposables)
+                    await disposable.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+        }
+    }
+}
+
+#endif

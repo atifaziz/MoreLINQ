@@ -97,6 +97,12 @@ Ensures that a source sequence of disposable objects are all acquired
 successfully. If the acquisition of any one fails then those successfully
 acquired till that point are disposed.
 
+### AcquireAsync
+
+Ensures that a source sequence of disposable objects are all acquired
+successfully. If the acquisition of any one fails then those successfully
+acquired till that point are disposed.
+
 ### Aggregate
 
 Applies multiple accumulators sequentially in a single pass over a sequence.

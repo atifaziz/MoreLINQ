@@ -8,6 +8,7 @@
         This project enhances LINQ to Objects with the following methods:
 
         - Acquire
+        - AcquireAsync
         - Aggregate (some EXPERIMENTAL)
         - AggregateRight
         - Append
