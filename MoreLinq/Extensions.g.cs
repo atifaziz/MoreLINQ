@@ -3948,6 +3948,28 @@ namespace MoreLinq.Extensions
     [GeneratedCode("MoreLinq.ExtensionsGenerator", "1.0.0.0")]
     public static partial class PairwiseExtension
     {
+#if !NO_ASYNC_STREAMS
+        /// <summary>
+        /// Returns a sequence resulting from applying a function to each
+        /// element in the source sequence and its
+        /// predecessor, with the exception of the first element which is
+        /// only returned as the predecessor of the second element.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult">The type of the element of the returned sequence.</typeparam>
+        /// <param name="source">The source sequence.</param>
+        /// <param name="resultSelector">A transform function to apply to
+        /// each pair of sequence.</param>
+        /// <returns>
+        /// Returns the resulting sequence.
+        /// </returns>
+        /// <remarks>
+        /// This operator uses deferred execution and streams its results.
+        /// </remarks>
+
+        public static IAsyncEnumerable<TResult> Pairwise<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, TSource, TResult> resultSelector)
+            => MoreEnumerable.Pairwise(source, resultSelector);
+#endif // !NO_ASYNC_STREAMS
         /// <summary>
         /// Returns a sequence resulting from applying a function to each
         /// element in the source sequence and its

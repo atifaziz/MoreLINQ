@@ -55,19 +55,104 @@ namespace MoreLinq
 
             return _(); IEnumerable<TResult> _()
             {
-                using (var e = source.GetEnumerator())
-                {
-                    if (!e.MoveNext())
-                        yield break;
+                using var e = source.GetEnumerator();
 
-                    var previous = e.Current;
-                    while (e.MoveNext())
-                    {
-                        yield return resultSelector(previous, e.Current);
-                        previous = e.Current;
-                    }
+                var algo = new PairwiseAlgorithm<TSource, TResult>(resultSelector);
+
+                if (!e.MoveNext())
+                    yield break;
+
+                algo.Init(e.Current);
+                while (e.MoveNext())
+                {
+                    yield return algo.OnItem(e.Current);
+                    algo.Loop();
+                }
+            }
+        }
+
+        struct PairwiseAlgorithm<TSource, TResult>
+        {
+            TSource item;
+            TSource previous;
+            readonly Func<TSource, TSource, TResult> resultSelector;
+
+            public PairwiseAlgorithm(Func<TSource, TSource, TResult> resultSelector)
+            {
+                item = default;
+                previous = default;
+                this.resultSelector = resultSelector;
+            }
+
+            public void Init(TSource previous) =>
+                this.previous = previous;
+
+            public TResult OnItem(TSource item)
+            {
+                this.item = item;
+                return resultSelector(previous, item);
+            }
+
+            public void Loop()
+            {
+                previous = item;
+                item = default;
+            }
+        }
+    }
+}
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    static partial class MoreEnumerable
+    {
+        /// <summary>
+        /// Returns a sequence resulting from applying a function to each
+        /// element in the source sequence and its
+        /// predecessor, with the exception of the first element which is
+        /// only returned as the predecessor of the second element.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult">The type of the element of the returned sequence.</typeparam>
+        /// <param name="source">The source sequence.</param>
+        /// <param name="resultSelector">A transform function to apply to
+        /// each pair of sequence.</param>
+        /// <returns>
+        /// Returns the resulting sequence.
+        /// </returns>
+        /// <remarks>
+        /// This operator uses deferred execution and streams its results.
+        /// </remarks>
+
+        public static IAsyncEnumerable<TResult> Pairwise<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, TSource, TResult> resultSelector)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
+
+            return _(); async IAsyncEnumerable<TResult> _()
+            {
+                await using var e = source.ConfigureAwait(false).GetAsyncEnumerator();
+
+                var algo = new PairwiseAlgorithm<TSource, TResult>();
+
+                if (!await e.MoveNextAsync())
+                    yield break;
+
+                algo.Init(e.Current);
+                while (await e.MoveNextAsync())
+                {
+                    yield return algo.OnItem(e.Current);
+                    algo.Loop();
                 }
             }
         }
     }
 }
+
+#endif
