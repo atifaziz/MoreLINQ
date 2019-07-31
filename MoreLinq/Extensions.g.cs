@@ -53,6 +53,57 @@ namespace MoreLinq.Extensions
 
     }
 
+    /// <summary><c>AcquireAsync</c> extension.</summary>
+
+    [GeneratedCode("MoreLinq.ExtensionsGenerator", "1.0.0.0")]
+    public static partial class AcquireAsyncExtension
+    {
+#if !NO_ASYNC_STREAMS
+
+        /// <summary>
+        /// Ensures that a source sequence of <see cref="IAsyncDisposable"/>
+        /// objects are all acquired successfully. If the acquisition of any
+        /// one <see cref="IAsyncDisposable"/> fails then those successfully
+        /// acquired till that point are disposed.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <param name="source">Source sequence of <see cref="IAsyncDisposable"/> objects.</param>
+        /// <returns>
+        /// Returns an array of all the acquired <see cref="IAsyncDisposable"/>
+        /// objects in source order.
+        /// </returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static Task<TSource[]> AcquireAsync<TSource>(this IAsyncEnumerable<TSource> source)
+            where TSource : IAsyncDisposable
+            => MoreEnumerable.AcquireAsync(source);
+#endif // !NO_ASYNC_STREAMS
+#if !NO_ASYNC_STREAMS
+        /// <summary>
+        /// Ensures that a source sequence of <see cref="IAsyncDisposable"/>
+        /// objects are all acquired successfully. If the acquisition of any
+        /// one <see cref="IAsyncDisposable"/> fails then those successfully
+        /// acquired till that point are disposed.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <param name="source">Source sequence of <see cref="IAsyncDisposable"/> objects.</param>
+        /// <returns>
+        /// Returns an array of all the acquired <see cref="IAsyncDisposable"/>
+        /// objects in source order.
+        /// </returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static Task<TSource[]> AcquireAsync<TSource>(this IEnumerable<TSource> source)
+            where TSource : IAsyncDisposable
+            => MoreEnumerable.AcquireAsync(source);
+#endif // !NO_ASYNC_STREAMS
+
+    }
+
     /// <summary><c>Aggregate</c> extension.</summary>
 
     [GeneratedCode("MoreLinq.ExtensionsGenerator", "1.0.0.0")]
@@ -643,6 +694,7 @@ namespace MoreLinq.Extensions
     [GeneratedCode("MoreLinq.ExtensionsGenerator", "1.0.0.0")]
     public static partial class BatchExtension
     {
+#if !NO_ASYNC_STREAMS
         /// <summary>
         /// Batches the source sequence into sized buckets.
         /// </summary>
@@ -654,8 +706,39 @@ namespace MoreLinq.Extensions
         /// This operator uses deferred execution and streams its results (buckets and bucket content).
         /// </remarks>
 
-        public static IEnumerable<IEnumerable<TSource>> Batch<TSource>(this IEnumerable<TSource> source, int size)
-            => MoreEnumerable.Batch(source, size);
+        public static IAsyncEnumerable<IEnumerable<TSource>> Batch<TSource>(this IAsyncEnumerable<TSource> source, int size)             => MoreEnumerable.Batch(source, size);
+#endif // !NO_ASYNC_STREAMS
+        /// <summary>
+        /// Batches the source sequence into sized buckets.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <param name="source">The source sequence.</param>
+        /// <param name="size">Size of buckets.</param>
+        /// <returns>A sequence of equally sized buckets containing elements of the source collection.</returns>
+        /// <remarks>
+        /// This operator uses deferred execution and streams its results (buckets and bucket content).
+        /// </remarks>
+
+        public static IEnumerable<IEnumerable<TSource>> Batch<TSource>(this IEnumerable<TSource> source, int size)             => MoreEnumerable.Batch(source, size);
+#if !NO_ASYNC_STREAMS
+
+        /// <summary>
+        /// Batches the source sequence into sized buckets and applies a projection to each bucket.
+        /// </summary>
+        /// <typeparam name="TSource">Type of elements in <paramref name="source"/> sequence.</typeparam>
+        /// <typeparam name="TResult">Type of result returned by <paramref name="resultSelector"/>.</typeparam>
+        /// <param name="source">The source sequence.</param>
+        /// <param name="size">Size of buckets.</param>
+        /// <param name="resultSelector">The projection to apply to each bucket.</param>
+        /// <returns>A sequence of projections on equally sized buckets containing elements of the source collection.</returns>
+        /// <remarks>
+        /// This operator uses deferred execution and streams its results (buckets and bucket content).
+        /// </remarks>
+
+        public static IAsyncEnumerable<TResult> Batch<TSource, TResult>(this IAsyncEnumerable<TSource> source, int size,
+            Func<IEnumerable<TSource>, TResult> resultSelector)
+            => MoreEnumerable.Batch(source, size, resultSelector);
+#endif // !NO_ASYNC_STREAMS
 
         /// <summary>
         /// Batches the source sequence into sized buckets and applies a projection to each bucket.
