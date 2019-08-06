@@ -20,7 +20,7 @@ namespace MoreLinq.Test
     using System;
     using System.Collections.Generic;
 
-    static class SequenceReader
+    static partial class SequenceReader
     {
         public static SequenceReader<T> Read<T>(this IEnumerable<T> source)
         {
@@ -149,3 +149,22 @@ namespace MoreLinq.Test
         }
     }
 }
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq.Test
+{
+    using System;
+    using System.Collections.Generic;
+
+    static partial class SequenceReader
+    {
+        public static SequenceReader<T> Read<T>(this IAsyncEnumerable<T> source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            return new SequenceReader<T>(source.ToEnumerable());
+        }
+    }
+}
+
+#endif // !NO_ASYNC_STREAMS

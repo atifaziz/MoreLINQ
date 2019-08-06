@@ -31,3 +31,24 @@ namespace MoreLinq.Test
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq.Test
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
+
+    /// <summary>
+    /// Enumerable sequence which throws InvalidOperationException as soon as its
+    /// enumerator is requested. Used to check lazy evaluation.
+    /// </summary>
+    class BreakingAsyncSequence<T> : IAsyncEnumerable<T>
+    {
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException();
+    }
+}
+
+#endif // !NO_ASYNC_STREAMS

@@ -94,3 +94,40 @@ namespace MoreLinq.Test
         }
     }
 }
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq.Test
+{
+    using NUnit.Framework;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    static partial class TestExtensions
+    {
+        internal static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(this IEnumerable<T> source)
+        {
+            foreach (var item in source)
+                yield return await new ValueTask<T>(item);
+        }
+
+        internal static IEnumerable<T> ToEnumerable<T>(this IAsyncEnumerable<T> source)
+        {
+            var e = source.GetAsyncEnumerator();
+            try
+            {
+                while (e.MoveNextAsync().GetAwaiter().GetResult())
+                    yield return e.Current;
+            }
+            finally
+            {
+                e.DisposeAsync().GetAwaiter().GetResult();
+            }
+        }
+
+        internal static void AssertSequenceEqual<T>(this IAsyncEnumerable<T> actual, params T[] expected) =>
+            Assert.That(actual.ToEnumerable(), Is.EqualTo(expected));
+    }
+}
+
+#endif // !NO_ASYNC_STREAMS

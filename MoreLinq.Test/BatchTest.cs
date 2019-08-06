@@ -89,3 +89,82 @@ namespace MoreLinq.Test
         }
     }
 }
+
+#if !NO_ASYNC_STREAMS
+
+namespace MoreLinq.Test
+{
+    using System.Collections.Generic;
+    using NUnit.Framework;
+
+    [TestFixture]
+    public class BatchAsyncTest
+    {
+        [Test]
+        public void BatchZeroSize()
+        {
+            AssertThrowsArgument.OutOfRangeException("size", () =>
+                 new object[0].ToAsyncEnumerable().Batch(0));
+        }
+
+        [Test]
+        public void BatchNegativeSize()
+        {
+            AssertThrowsArgument.OutOfRangeException("size", () =>
+                 new object[0].ToAsyncEnumerable().Batch(-1));
+        }
+
+        [Test]
+        public void BatchEvenlyDivisibleSequence()
+        {
+            var result = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }.ToAsyncEnumerable().Batch(3);
+            using (var reader = result.Read())
+            {
+                reader.Read().AssertSequenceEqual(1, 2, 3);
+                reader.Read().AssertSequenceEqual(4, 5, 6);
+                reader.Read().AssertSequenceEqual(7, 8, 9);
+                reader.ReadEnd();
+            }
+        }
+
+        [Test]
+        public void BatchUnevenlyDivisbleSequence()
+        {
+            var result = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }.ToAsyncEnumerable().Batch(4);
+            using (var reader = result.Read())
+            {
+                reader.Read().AssertSequenceEqual(1, 2, 3, 4);
+                reader.Read().AssertSequenceEqual(5, 6, 7, 8);
+                reader.Read().AssertSequenceEqual(9);
+                reader.ReadEnd();
+            }
+        }
+
+        [Test]
+        public void BatchSequenceTransformingResult()
+        {
+            var result = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }.ToAsyncEnumerable().Batch(4, batch => batch.Sum());
+            result.AssertSequenceEqual(10, 26, 9);
+        }
+
+        [Test]
+        public void BatchSequenceYieldsListsOfBatches()
+        {
+            var result = new[] { 1, 2, 3 }.ToAsyncEnumerable().Batch(2);
+            using (var reader = result.Read())
+            {
+                Assert.That(reader.Read(), Is.InstanceOf(typeof(IList<int>)));
+                Assert.That(reader.Read(), Is.InstanceOf(typeof(IList<int>)));
+                reader.ReadEnd();
+            }
+        }
+
+        [Test]
+        public void BatchIsLazy()
+        {
+            new BreakingAsyncSequence<object>().Batch(1);
+        }
+    }
+}
+
+#endif
