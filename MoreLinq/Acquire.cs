@@ -85,22 +85,25 @@ namespace MoreLinq
         /// This operator executes immediately.
         /// </remarks>
 
-        public static async Task<TSource[]> AcquireAsync<TSource>(this IEnumerable<TSource> source)
+        public static Task<TSource[]> AcquireAsync<TSource>(this IEnumerable<TSource> source)
             where TSource : IAsyncDisposable
         {            
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            var disposables = new List<TSource>();
-            try
+            return _(); async Task<TSource[]> _()
             {
-                disposables.AddRange(source);
-                return disposables.ToArray();
-            }
-            catch
-            {
-                foreach (var disposable in disposables)
-                    await disposable.DisposeAsync().ConfigureAwait(false);
-                throw;
+                var disposables = new List<TSource>();
+                try
+                {
+                    disposables.AddRange(source);
+                    return disposables.ToArray();
+                }
+                catch
+                {
+                    foreach (var disposable in disposables)
+                        await disposable.DisposeAsync().ConfigureAwait(false);
+                    throw;
+                }
             }
         }
 
@@ -120,23 +123,26 @@ namespace MoreLinq
         /// This operator executes immediately.
         /// </remarks>
 
-        public static async Task<TSource[]> AcquireAsync<TSource>(this IAsyncEnumerable<TSource> source)
+        public static Task<TSource[]> AcquireAsync<TSource>(this IAsyncEnumerable<TSource> source)
             where TSource : IAsyncDisposable
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            var disposables = new List<TSource>();
-            try
+            return _(); async Task<TSource[]> _()
             {
-                await foreach (var resource in source.ConfigureAwait(false))
-                    disposables.Add(resource);
-                return disposables.ToArray();
-            }
-            catch
-            {
-                foreach (var disposable in disposables)
-                    await disposable.DisposeAsync().ConfigureAwait(false);
-                throw;
+                var disposables = new List<TSource>();
+                try
+                {
+                    await foreach (var resource in source.ConfigureAwait(false))
+                        disposables.Add(resource);
+                    return disposables.ToArray();
+                }
+                catch
+                {
+                    foreach (var disposable in disposables)
+                        await disposable.DisposeAsync().ConfigureAwait(false);
+                    throw;
+                }
             }
         }
     }
