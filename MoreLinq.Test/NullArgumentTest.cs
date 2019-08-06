@@ -23,6 +23,7 @@ namespace MoreLinq.Test
     using System.Diagnostics;
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Threading;
     using System.Threading.Tasks;
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
@@ -214,6 +215,23 @@ namespace MoreLinq.Test
                     return this;
                 }
             }
+
+            #if !NO_ASYNC_STREAMS
+
+            class AsyncEnumerator<T> : IAsyncEnumerator<T>
+            {
+                public T Current { get; }
+                public ValueTask DisposeAsync() => new ValueTask(Task.CompletedTask);
+                public ValueTask<bool> MoveNextAsync() => new ValueTask<bool>(Task.FromResult(false));
+            }
+
+            public class AsyncEnumerable<T> : IAsyncEnumerable<T>
+            {
+                public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) =>
+                    new AsyncEnumerator<T>();
+            }
+
+            #endif
 
             #if !NO_ASYNC
 
