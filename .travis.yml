@@ -4,7 +4,7 @@ os:
   - osx
 osx_image: xcode8.3
 solution: MoreLinq.sln
-mono: 5.0.1
+mono: 6.0.0
 dist: xenial
 sudo: required
 dotnet: 2.2.203
