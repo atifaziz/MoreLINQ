@@ -60,20 +60,23 @@ namespace MoreLinq
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
-            using var enumerator = source.GetEnumerator();
-
-            if (!enumerator.MoveNext())
-                yield break;
-
-            var current = enumerator.Current;
-            var hasNext = enumerator.MoveNext();
-            yield return resultSelector(current, true, !hasNext);
-
-            while (hasNext)
+            return _(); IEnumerable<TResult> _()
             {
-                current = enumerator.Current;
-                hasNext = enumerator.MoveNext();
-                yield return resultSelector(current, false, !hasNext);
+                using var enumerator = source.GetEnumerator();
+
+                if (!enumerator.MoveNext())
+                    yield break;
+
+                var current = enumerator.Current;
+                var hasNext = enumerator.MoveNext();
+                yield return resultSelector(current, true, !hasNext);
+
+                while (hasNext)
+                {
+                    current = enumerator.Current;
+                    hasNext = enumerator.MoveNext();
+                    yield return resultSelector(current, false, !hasNext);
+                }
             }
         }
     }
