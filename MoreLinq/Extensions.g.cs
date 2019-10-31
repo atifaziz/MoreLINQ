@@ -6706,7 +6706,7 @@ namespace MoreLinq.Extensions
         /// ]]></code>
         /// </example>
 
-        public static IEnumerable<IList<TSource>> WindowLeft<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> WindowLeft<TSource>(this IEnumerable<TSource> source, int size)
             => MoreEnumerable.WindowLeft(source, size);
 
     }
@@ -6751,7 +6751,7 @@ namespace MoreLinq.Extensions
         /// ]]></code>
         /// </example>
 
-        public static IEnumerable<IList<TSource>> WindowRight<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> WindowRight<TSource>(this IEnumerable<TSource> source, int size)
             => MoreEnumerable.WindowRight(source, size);
 
     }

@@ -35,7 +35,7 @@ namespace MoreLinq.Test
             const int count = 100;
             var sequence = Enumerable.Range(1, count).ToArray();
 
-            IList<int>[] result;
+            IReadOnlyList<int>[] result;
             using (var ts = sequence.AsTestingSequence())
                 result = ts.WindowRight(1).ToArray();
 

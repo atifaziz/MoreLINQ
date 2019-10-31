@@ -58,26 +58,37 @@ namespace MoreLinq
         /// ]]></code>
         /// </example>
 
-        public static IEnumerable<IList<TSource>> WindowLeft<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> WindowLeft<TSource>(this IEnumerable<TSource> source, int size)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
-            return _(); IEnumerable<IList<TSource>> _()
+            return _(); IEnumerable<IReadOnlyList<TSource>> _()
             {
-                var window = new List<TSource>();
-                foreach (var item in source)
+                var cache = new List<TSource>();
+
+                using var enumerator = source.GetEnumerator();
+
+                var hasNext = true;
+                bool MoveNext() => hasNext && (hasNext = enumerator.MoveNext());
+
+                for (var i = 0; i < size && MoveNext(); i++)
                 {
-                    window.Add(item);
-                    if (window.Count < size)
-                        continue;
-                    yield return window;
-                    window = new List<TSource>(window.Skip(1));
+                    cache.Add(enumerator.Current);
                 }
-                while (window.Count > 0)
+
+                var offset = 0;
+                while (MoveNext())
                 {
-                    yield return window;
-                    window = new List<TSource>(window.Skip(1));
+                    yield return new WindowedList<TSource>(cache, offset, cache.Count - offset);
+                    cache.Add(enumerator.Current);
+                    offset++;
+                }
+
+                while (offset < cache.Count)
+                {
+                    yield return new WindowedList<TSource>(cache, offset, cache.Count - offset);
+                    offset++;
                 }
             }
         }

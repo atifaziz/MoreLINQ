@@ -58,34 +58,19 @@ namespace MoreLinq
         /// ]]></code>
         /// </example>
 
-        public static IEnumerable<IList<TSource>> WindowRight<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> WindowRight<TSource>(this IEnumerable<TSource> source, int size)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
-            return source.WindowRightWhile((_, i) => i < size);
-        }
-
-        /// <summary>
-        /// Creates a right-aligned sliding window over the source sequence
-        /// with a predicate function determining the window range.
-        /// </summary>
-
-        static IEnumerable<IList<TSource>> WindowRightWhile<TSource>(
-            this IEnumerable<TSource> source,
-            Func<TSource, int, bool> predicate)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
-
-            return _(); IEnumerable<IList<TSource>> _()
+            return _(); IEnumerable<IReadOnlyList<TSource>> _()
             {
-                var window = new List<TSource>();
-                foreach (var item in source)
+                var cache = new List<TSource>();
+                var offset = -size;
+                foreach (var element in source)
                 {
-                    window.Add(item);
-                    yield return window;
-                    window = new List<TSource>(predicate(item, window.Count) ? window : window.Skip(1));
+                    cache.Add(element);
+                    yield return new WindowedList<TSource>(cache, Math.Max(0, ++offset), Math.Min(size, cache.Count));
                 }
             }
         }
