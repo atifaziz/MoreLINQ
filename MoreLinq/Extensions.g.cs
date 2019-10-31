@@ -6661,7 +6661,7 @@ namespace MoreLinq.Extensions
         /// <param name="size">The size (number of elements) in each window</param>
         /// <returns>A series of sequences representing each sliding window subsequence</returns>
 
-        public static IEnumerable<IList<TSource>> Window<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> Window<TSource>(this IEnumerable<TSource> source, int size)
             => MoreEnumerable.Window(source, size);
 
     }

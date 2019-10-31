@@ -34,38 +34,31 @@ namespace MoreLinq
         /// <param name="size">The size (number of elements) in each window</param>
         /// <returns>A series of sequences representing each sliding window subsequence</returns>
 
-        public static IEnumerable<IList<TSource>> Window<TSource>(this IEnumerable<TSource> source, int size)
+        public static IEnumerable<IReadOnlyList<TSource>> Window<TSource>(this IEnumerable<TSource> source, int size)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+            if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
 
-            return _(); IEnumerable<IList<TSource>> _()
+            return _(); IEnumerable<IReadOnlyList<TSource>> _()
             {
-                using var iter = source.GetEnumerator();
+                var cache = new List<TSource>();
 
-                // generate the first window of items
-                var window = new TSource[size];
-                int i;
-                for (i = 0; i < size && iter.MoveNext(); i++)
-                    window[i] = iter.Current;
+                using var enumerator = source.GetEnumerator();
 
-                if (i < size)
-                    yield break;
+                var hasNext = true;
+                bool MoveNext() => hasNext && (hasNext = enumerator.MoveNext());
 
-                // return the first window (whatever size it may be)
-                yield return window;
-
-                // generate the next window by shifting forward by one item
-                while (iter.MoveNext())
+                for (var i = 0; i < size - 1 && MoveNext(); i++)
                 {
-                    // NOTE: If we used a circular queue rather than a list,
-                    //       we could make this quite a bit more efficient.
-                    //       Sadly the BCL does not offer such a collection.
-                    var newWindow = new TSource[size];
-                    Array.Copy(window, 1, newWindow, 0, size - 1);
-                    newWindow[size - 1] = iter.Current;
-                    yield return newWindow;
-                    window = newWindow;
+                    cache.Add(enumerator.Current);
+                }
+
+                var offset = 0;
+                while (MoveNext())
+                {
+                    cache.Add(enumerator.Current);
+                    yield return new WindowedList<TSource>(cache, offset, cache.Count - offset);
+                    offset++;
                 }
             }
         }
