@@ -68,7 +68,7 @@ namespace MoreLinq
             var current = enumerator.Current;
             var hasNext = enumerator.MoveNext();
             yield return resultSelector(current, true, !hasNext);
-            
+
             while (hasNext)
             {
                 current = enumerator.Current;
