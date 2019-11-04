@@ -32,6 +32,8 @@ namespace MoreLinq.Test
     {
         public static IEnumerable<ITestCaseData> AccumulatorsTestSource(string name, int count) =>
 
+        
+
             /* Generates an invocation as follows for 2 accumulators:
 
                 Enumerable.Range(1, count)
@@ -46,6 +48,7 @@ namespace MoreLinq.Test
             from m in typeof(MoreEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
             where m.Name == nameof(MoreEnumerable.Aggregate)
                && m.IsGenericMethodDefinition
+               && m.ReturnType.Name?.Contains("ValueTuple") != true // exclude overloads returning ValueTuple
             select new
             {
                 Source = source,
