@@ -32,8 +32,6 @@ namespace MoreLinq.Test
     {
         public static IEnumerable<ITestCaseData> AccumulatorsTestSource(string name, int count) =>
 
-        
-
             /* Generates an invocation as follows for 2 accumulators:
 
                 Enumerable.Range(1, count)
