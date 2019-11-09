@@ -46,6 +46,7 @@ namespace MoreLinq.Test
             from m in typeof(MoreEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
             where m.Name == nameof(MoreEnumerable.Aggregate)
                && m.IsGenericMethodDefinition
+               && m.ReturnType.Name?.Contains("ValueTuple") != true // exclude overloads returning ValueTuple
             select new
             {
                 Source = source,

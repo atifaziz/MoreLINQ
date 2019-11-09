@@ -101,7 +101,7 @@ acquired till that point are disposed.
 
 Applies multiple accumulators sequentially in a single pass over a sequence.
 
-This method has 8 overloads.
+This method has 14 overloads.
 
 ### AggregateRight
 
@@ -749,7 +749,7 @@ namespace.
 Applies multiple accumulator queries sequentially in a single pass over a
 sequence.
 
-This method has 8 overloads.
+This method has 16 overloads.
 
 ### Await
 

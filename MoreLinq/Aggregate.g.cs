@@ -65,6 +65,33 @@ namespace MoreLinq
 
             return resultSelector(a1, a2);
         }
+
+        /// <summary>
+        /// Applies two accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2) Aggregate<T, TAccumulate1, TAccumulate2>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -141,6 +168,47 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r2[0], nameof(accumulator2))
             );
         }
+
+        /// <summary>
+        /// Applies two accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2) Aggregate<T, TResult1, TResult2>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -200,6 +268,38 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3);
+        }
+
+        /// <summary>
+        /// Applies three accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                ValueTuple.Create);
         }
     }
 }
@@ -284,6 +384,51 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r3[0], nameof(accumulator3))
             );
         }
+
+        /// <summary>
+        /// Applies three accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3) Aggregate<T, TResult1, TResult2, TResult3>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -350,6 +495,43 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3, a4);
+        }
+
+        /// <summary>
+        /// Applies four accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                seed4, accumulator4,
+                ValueTuple.Create);
         }
     }
 }
@@ -441,6 +623,55 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r4[0], nameof(accumulator4))
             );
         }
+
+        /// <summary>
+        /// Applies four accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <typeparam name="TResult4">The type of the result of the fourth accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3, TResult4) Aggregate<T, TResult1, TResult2, TResult3, TResult4>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3,
+            Func<IObservable<T>, IObservable<TResult4>> accumulator4)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                accumulator4,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -514,6 +745,48 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3, a4, a5);
+        }
+
+        /// <summary>
+        /// Applies five accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                seed4, accumulator4,
+                seed5, accumulator5,
+                ValueTuple.Create);
         }
     }
 }
@@ -612,6 +885,59 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r5[0], nameof(accumulator5))
             );
         }
+
+        /// <summary>
+        /// Applies five accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <typeparam name="TResult4">The type of the result of the fourth accumulator.</typeparam>
+        /// <typeparam name="TResult5">The type of the result of the fifth accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3, TResult4, TResult5) Aggregate<T, TResult1, TResult2, TResult3, TResult4, TResult5>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3,
+            Func<IObservable<T>, IObservable<TResult4>> accumulator4,
+            Func<IObservable<T>, IObservable<TResult5>> accumulator5)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                accumulator4,
+                accumulator5,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -692,6 +1018,53 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3, a4, a5, a6);
+        }
+
+        /// <summary>
+        /// Applies six accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                seed4, accumulator4,
+                seed5, accumulator5,
+                seed6, accumulator6,
+                ValueTuple.Create);
         }
     }
 }
@@ -797,6 +1170,63 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r6[0], nameof(accumulator6))
             );
         }
+
+        /// <summary>
+        /// Applies six accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <typeparam name="TResult4">The type of the result of the fourth accumulator.</typeparam>
+        /// <typeparam name="TResult5">The type of the result of the fifth accumulator.</typeparam>
+        /// <typeparam name="TResult6">The type of the result of the sixth accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3, TResult4, TResult5, TResult6) Aggregate<T, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3,
+            Func<IObservable<T>, IObservable<TResult4>> accumulator4,
+            Func<IObservable<T>, IObservable<TResult5>> accumulator5,
+            Func<IObservable<T>, IObservable<TResult6>> accumulator6)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                accumulator4,
+                accumulator5,
+                accumulator6,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -884,6 +1314,58 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3, a4, a5, a6, a7);
+        }
+
+        /// <summary>
+        /// Applies seven accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate7">The type of seventh accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="seed7">The seed value for the seventh accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6,
+            TAccumulate7 seed7, Func<TAccumulate7, T, TAccumulate7> accumulator7)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                seed4, accumulator4,
+                seed5, accumulator5,
+                seed6, accumulator6,
+                seed7, accumulator7,
+                ValueTuple.Create);
         }
     }
 }
@@ -996,6 +1478,67 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r7[0], nameof(accumulator7))
             );
         }
+
+        /// <summary>
+        /// Applies seven accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <typeparam name="TResult4">The type of the result of the fourth accumulator.</typeparam>
+        /// <typeparam name="TResult5">The type of the result of the fifth accumulator.</typeparam>
+        /// <typeparam name="TResult6">The type of the result of the sixth accumulator.</typeparam>
+        /// <typeparam name="TResult7">The type of the result of the seventh accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7) Aggregate<T, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3,
+            Func<IObservable<T>, IObservable<TResult4>> accumulator4,
+            Func<IObservable<T>, IObservable<TResult5>> accumulator5,
+            Func<IObservable<T>, IObservable<TResult6>> accumulator6,
+            Func<IObservable<T>, IObservable<TResult7>> accumulator7)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                accumulator4,
+                accumulator5,
+                accumulator6,
+                accumulator7,
+                ValueTuple.Create);
+        }
     }
 }
 
@@ -1090,6 +1633,63 @@ namespace MoreLinq
             }
 
             return resultSelector(a1, a2, a3, a4, a5, a6, a7, a8);
+        }
+
+        /// <summary>
+        /// Applies eight accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate7">The type of seventh accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate8">The type of eighth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="seed7">The seed value for the seventh accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <param name="seed8">The seed value for the eighth accumulator.</param>
+        /// <param name="accumulator8">The eighth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7, TAccumulate8) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7, TAccumulate8>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6,
+            TAccumulate7 seed7, Func<TAccumulate7, T, TAccumulate7> accumulator7,
+            TAccumulate8 seed8, Func<TAccumulate8, T, TAccumulate8> accumulator8)
+        {
+            return Aggregate(source,
+                seed1, accumulator1,
+                seed2, accumulator2,
+                seed3, accumulator3,
+                seed4, accumulator4,
+                seed5, accumulator5,
+                seed6, accumulator6,
+                seed7, accumulator7,
+                seed8, accumulator8,
+                ValueTuple.Create);
         }
     }
 }
@@ -1208,6 +1808,71 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r7[0], nameof(accumulator7)),
                 GetAggregateResult(r8[0], nameof(accumulator8))
             );
+        }
+
+        /// <summary>
+        /// Applies eight accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TResult1">The type of the result of the first accumulator.</typeparam>
+        /// <typeparam name="TResult2">The type of the result of the second accumulator.</typeparam>
+        /// <typeparam name="TResult3">The type of the result of the third accumulator.</typeparam>
+        /// <typeparam name="TResult4">The type of the result of the fourth accumulator.</typeparam>
+        /// <typeparam name="TResult5">The type of the result of the fifth accumulator.</typeparam>
+        /// <typeparam name="TResult6">The type of the result of the sixth accumulator.</typeparam>
+        /// <typeparam name="TResult7">The type of the result of the seventh accumulator.</typeparam>
+        /// <typeparam name="TResult8">The type of the result of the eighth accumulator.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <param name="accumulator8">The eighth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8) Aggregate<T, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8>(
+            this IEnumerable<T> source,
+            Func<IObservable<T>, IObservable<TResult1>> accumulator1,
+            Func<IObservable<T>, IObservable<TResult2>> accumulator2,
+            Func<IObservable<T>, IObservable<TResult3>> accumulator3,
+            Func<IObservable<T>, IObservable<TResult4>> accumulator4,
+            Func<IObservable<T>, IObservable<TResult5>> accumulator5,
+            Func<IObservable<T>, IObservable<TResult6>> accumulator6,
+            Func<IObservable<T>, IObservable<TResult7>> accumulator7,
+            Func<IObservable<T>, IObservable<TResult8>> accumulator8)
+        {
+            return Aggregate(source,
+                accumulator1,
+                accumulator2,
+                accumulator3,
+                accumulator4,
+                accumulator5,
+                accumulator6,
+                accumulator7,
+                accumulator8,
+                ValueTuple.Create);
         }
     }
 }

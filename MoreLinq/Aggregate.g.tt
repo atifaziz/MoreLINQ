@@ -53,6 +53,8 @@
             Arguments = args.Take(a.Count)
                             .Select(aa => new { aa.Number, Num = aa.Count, aa.Ordinal })
                             .ToList(),
+            AccumulateTypes = string.Join(", ", Enumerable.Range(1, a.Count).Select(i => $"TAccumulate{i}")),
+            ResultTypes = string.Join(", ", Enumerable.Range(1, a.Count).Select(i => $"TResult{i}"))
         };
 
     foreach (var o in overloads)
@@ -88,12 +90,12 @@ namespace MoreLinq
         /// This operator executes immediately.
         /// </remarks>
 
-        public static TResult Aggregate<T, <#= string.Join(", ", from x in o.Arguments select "TAccumulate" + x.Number) #>, TResult>(
+        public static TResult Aggregate<T, <#= o.AccumulateTypes #>, TResult>(
             this IEnumerable<T> source,
 <#      foreach (var arg in o.Arguments) { #>
             TAccumulate<#= arg.Number #> seed<#= arg.Number #>, Func<TAccumulate<#= arg.Number #>, T, TAccumulate<#= arg.Number #>> accumulator<#= arg.Number #>,
 <#      } #>
-            Func<<#= string.Join(", ", from x in o.Arguments select "TAccumulate" + x.Number) #>, TResult> resultSelector)
+            Func<<#= o.AccumulateTypes #>, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 <#      foreach (var arg in o.Arguments) { #>
@@ -113,6 +115,35 @@ namespace MoreLinq
             }
 
             return resultSelector(<#= string.Join(", ", from x in o.Arguments select "a" + x.Number) #>);
+        }
+
+        /// <summary>
+        /// Applies <#= o.Arity #> accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+<#      foreach (var arg in o.Arguments) { #>
+        /// <typeparam name="TAccumulate<#= arg.Number #>">The type of <#= arg.Ordinal #> accumulator value.</typeparam>
+<#      } #>
+        /// <param name="source">The source sequence</param>
+<#      foreach (var arg in o.Arguments) { #>
+        /// <param name="seed<#= arg.Number #>">The seed value for the <#= arg.Ordinal #> accumulator.</param>
+        /// <param name="accumulator<#= arg.Number #>">The <#= arg.Ordinal #> accumulator.</param>
+<#      } #>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (<#= o.AccumulateTypes #>) Aggregate<T, <#= o.AccumulateTypes #>>(
+            this IEnumerable<T> source,
+            <#=string.Join($",\r\n            ", from arg in o.Arguments select
+            $"TAccumulate{arg.Number} seed{arg.Number}, Func<TAccumulate{arg.Number}, T, TAccumulate{arg.Number}> accumulator{arg.Number}") #>)
+        {
+            return Aggregate(source,
+<#      foreach (var arg in o.Arguments) { #>
+                seed<#=arg.Number#>, accumulator<#=arg.Number#>,
+<#      } #>
+                ValueTuple.Create);
         }
     }
 }
@@ -161,12 +192,12 @@ namespace MoreLinq.Experimental
         /// </para>
         /// </remarks>
 
-        public static TResult Aggregate<T, <#= string.Join(", ", from x in o.Arguments select "TResult" + x.Number) #>, TResult>(
+        public static TResult Aggregate<T, <#= o.ResultTypes #>, TResult>(
             this IEnumerable<T> source,
 <#      foreach (var arg in o.Arguments) { #>
             Func<IObservable<T>, IObservable<TResult<#= arg.Number #>>> accumulator<#= arg.Number #>,
 <#      } #>
-            Func<<#= string.Join(", ", from x in o.Arguments select "TResult" + x.Number) #>, TResult> resultSelector)
+            Func<<#= o.ResultTypes #>, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 <#      foreach (var arg in o.Arguments) { #>
@@ -196,6 +227,50 @@ namespace MoreLinq.Experimental
                 GetAggregateResult(r<#= arg.Number #>[0], nameof(accumulator<#= arg.Number #>))<#= arg.Num < o.Count ? "," : "" #>
 <#      } #>
             );
+        }
+
+        /// <summary>
+        /// Applies <#= o.Arity #> accumulator queries sequentially in a single
+        /// pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+<#      foreach (var arg in o.Arguments) { #>
+        /// <typeparam name="TResult<#= arg.Number #>">The type of the result of the <#= arg.Ordinal #> accumulator.</typeparam>
+<#      } #>
+        /// <param name="source">The source sequence</param>
+<#      foreach (var arg in o.Arguments) { #>
+        /// <param name="accumulator<#= arg.Number #>">The <#= arg.Ordinal #> accumulator.</param>
+<#      } #>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// An <see cref="IObservable{T}"/> returned by an accumulator function
+        /// produced zero or more than a single aggregate result.
+        /// </exception>
+        /// <remarks>
+        /// <para>This operator executes immediately.</para>
+        /// <para>
+        /// Each accumulator argument is a function that receives an
+        /// <see cref="IObservable{T}"/>, which when subscribed to, produces the
+        /// items in the <paramref name="source"/> sequence and in original
+        /// order; the function must then return an <see cref="IObservable{T}"/>
+        /// that produces a single aggregate on completion (when
+        /// <see cref="IObserver{T}.OnCompleted"/> is called. An error is raised
+        /// at run-time if the <see cref="IObserver{T}"/> returned by an
+        /// accumulator function produces no result or produces more than a
+        /// single result.
+        /// </para>
+        /// </remarks>
+
+        public static (<#= o.ResultTypes #>) Aggregate<T, <#= o.ResultTypes #>>(
+            this IEnumerable<T> source,
+            <#=string.Join($",\r\n            ", from arg in o.Arguments select
+            $"Func<IObservable<T>, IObservable<TResult{arg.Number}>> accumulator{arg.Number}") #>)
+        {
+            return Aggregate(source,
+<#      foreach (var arg in o.Arguments) { #>
+                accumulator<#=arg.Number#>,
+<#      } #>
+                ValueTuple.Create);
         }
     }
 }
