@@ -25,6 +25,7 @@ namespace MoreLinq.Test
     using Experimental;
     using System.Reactive.Linq;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using NUnit.Framework.Interfaces;
     using static MoreLinq.Extensions.AppendExtension;
     using static FuncModule;
@@ -48,6 +49,7 @@ namespace MoreLinq.Test
             from m in typeof(MoreEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
             where m.Name == nameof(MoreEnumerable.Aggregate)
                && m.IsGenericMethodDefinition
+               && !typeof(ITuple).IsAssignableFrom(m.ReturnType) // exclude overloads returning tuple
             select new
             {
                 Source = source,

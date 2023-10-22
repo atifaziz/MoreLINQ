@@ -70,6 +70,28 @@ namespace MoreLinq.Extensions
     [GeneratedCode("MoreLinq.ExtensionsGenerator", "1.0.0.0")]
     public static partial class AggregateExtension
     {
+
+        /// <summary>
+        /// Applies two accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2) Aggregate<T, TAccumulate1, TAccumulate2>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2);
         /// <summary>
         /// Applies two accumulators sequentially in a single pass over a
         /// sequence.
@@ -97,6 +119,32 @@ namespace MoreLinq.Extensions
             TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
             Func<TAccumulate1, TAccumulate2, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, resultSelector);
+
+        /// <summary>
+        /// Applies three accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3);
         /// <summary>
         /// Applies three accumulators sequentially in a single pass over a
         /// sequence.
@@ -128,6 +176,36 @@ namespace MoreLinq.Extensions
             TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
             Func<TAccumulate1, TAccumulate2, TAccumulate3, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, resultSelector);
+
+        /// <summary>
+        /// Applies four accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4);
         /// <summary>
         /// Applies four accumulators sequentially in a single pass over a
         /// sequence.
@@ -163,6 +241,40 @@ namespace MoreLinq.Extensions
             TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
             Func<TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, resultSelector);
+
+        /// <summary>
+        /// Applies five accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5);
         /// <summary>
         /// Applies five accumulators sequentially in a single pass over a
         /// sequence.
@@ -202,6 +314,44 @@ namespace MoreLinq.Extensions
             TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
             Func<TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, resultSelector);
+
+        /// <summary>
+        /// Applies six accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, seed6, accumulator6);
         /// <summary>
         /// Applies six accumulators sequentially in a single pass over a
         /// sequence.
@@ -245,6 +395,48 @@ namespace MoreLinq.Extensions
             TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6,
             Func<TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, seed6, accumulator6, resultSelector);
+
+        /// <summary>
+        /// Applies seven accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate7">The type of seventh accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="seed7">The seed value for the seventh accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6,
+            TAccumulate7 seed7, Func<TAccumulate7, T, TAccumulate7> accumulator7)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, seed6, accumulator6, seed7, accumulator7);
         /// <summary>
         /// Applies seven accumulators sequentially in a single pass over a
         /// sequence.
@@ -292,6 +484,52 @@ namespace MoreLinq.Extensions
             TAccumulate7 seed7, Func<TAccumulate7, T, TAccumulate7> accumulator7,
             Func<TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7, TResult> resultSelector)
             => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, seed6, accumulator6, seed7, accumulator7, resultSelector);
+
+        /// <summary>
+        /// Applies eight accumulators sequentially in a single pass over a sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in <paramref name="source"/>.</typeparam>
+        /// <typeparam name="TAccumulate1">The type of first accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate2">The type of second accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate3">The type of third accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate4">The type of fourth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate5">The type of fifth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate6">The type of sixth accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate7">The type of seventh accumulator value.</typeparam>
+        /// <typeparam name="TAccumulate8">The type of eighth accumulator value.</typeparam>
+        /// <param name="source">The source sequence</param>
+        /// <param name="seed1">The seed value for the first accumulator.</param>
+        /// <param name="accumulator1">The first accumulator.</param>
+        /// <param name="seed2">The seed value for the second accumulator.</param>
+        /// <param name="accumulator2">The second accumulator.</param>
+        /// <param name="seed3">The seed value for the third accumulator.</param>
+        /// <param name="accumulator3">The third accumulator.</param>
+        /// <param name="seed4">The seed value for the fourth accumulator.</param>
+        /// <param name="accumulator4">The fourth accumulator.</param>
+        /// <param name="seed5">The seed value for the fifth accumulator.</param>
+        /// <param name="accumulator5">The fifth accumulator.</param>
+        /// <param name="seed6">The seed value for the sixth accumulator.</param>
+        /// <param name="accumulator6">The sixth accumulator.</param>
+        /// <param name="seed7">The seed value for the seventh accumulator.</param>
+        /// <param name="accumulator7">The seventh accumulator.</param>
+        /// <param name="seed8">The seed value for the eighth accumulator.</param>
+        /// <param name="accumulator8">The eighth accumulator.</param>
+        /// <returns>A tuple containing the values of each of the accumulators.</returns>
+        /// <remarks>
+        /// This operator executes immediately.
+        /// </remarks>
+
+        public static (TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7, TAccumulate8) Aggregate<T, TAccumulate1, TAccumulate2, TAccumulate3, TAccumulate4, TAccumulate5, TAccumulate6, TAccumulate7, TAccumulate8>(
+            this IEnumerable<T> source,
+            TAccumulate1 seed1, Func<TAccumulate1, T, TAccumulate1> accumulator1,
+            TAccumulate2 seed2, Func<TAccumulate2, T, TAccumulate2> accumulator2,
+            TAccumulate3 seed3, Func<TAccumulate3, T, TAccumulate3> accumulator3,
+            TAccumulate4 seed4, Func<TAccumulate4, T, TAccumulate4> accumulator4,
+            TAccumulate5 seed5, Func<TAccumulate5, T, TAccumulate5> accumulator5,
+            TAccumulate6 seed6, Func<TAccumulate6, T, TAccumulate6> accumulator6,
+            TAccumulate7 seed7, Func<TAccumulate7, T, TAccumulate7> accumulator7,
+            TAccumulate8 seed8, Func<TAccumulate8, T, TAccumulate8> accumulator8)
+            => MoreEnumerable.Aggregate(source, seed1, accumulator1, seed2, accumulator2, seed3, accumulator3, seed4, accumulator4, seed5, accumulator5, seed6, accumulator6, seed7, accumulator7, seed8, accumulator8);
         /// <summary>
         /// Applies eight accumulators sequentially in a single pass over a
         /// sequence.
