@@ -744,7 +744,7 @@ namespace.
 Applies multiple accumulator queries sequentially in a single pass over a
 sequence.
 
-This method has 16 overloads.
+This method has 14 overloads.
 
 ### Await
 
